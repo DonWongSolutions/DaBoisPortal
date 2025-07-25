@@ -4,8 +4,8 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
-import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, getChatMessages, saveChatMessages, saveUsers } from '@/lib/data';
-import type { AppSettings, Event, Trip, UserAvailability, ChatMessage, User } from '@/lib/types';
+import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, getChatMessages, saveChatMessages, saveUsers, saveWikiContent } from '@/lib/data';
+import type { AppSettings, Event, Trip, UserAvailability, ChatMessage, User, WikiContent } from '@/lib/types';
 import * as ical from 'node-ical';
 
 
@@ -490,5 +490,25 @@ export async function clearChatAction() {
         return { success: true, message: "Chat history cleared." };
     } catch(e) {
         return { success: false, message: "Failed to clear chat history." };
+    }
+}
+
+export async function saveWikiContentAction(content: string) {
+    const sessionUser = await getSession();
+    const editableRoles: Array<User['role']> = ['admin', 'member'];
+    
+    // Only the 4 core members (who are admin/member) can edit.
+    if (!sessionUser || !editableRoles.includes(sessionUser.role) || sessionUser.name === 'Parents') {
+        return { success: false, message: 'Unauthorized: You do not have permission to edit this page.' };
+    }
+
+    try {
+        const wikiContent: WikiContent = { content };
+        await saveWikiContent(wikiContent);
+        revalidatePath('/wiki');
+        revalidatePath('/wiki/edit');
+        return { success: true, message: 'Wiki saved successfully.' };
+    } catch(e) {
+        return { success: false, message: 'Failed to save wiki content.' };
     }
 }

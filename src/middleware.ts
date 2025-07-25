@@ -2,12 +2,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin'];
+const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin', '/wiki/edit'];
 const authRoutes = ['/login'];
+const publicRoutes = ['/wiki'];
 
 export function middleware(request: NextRequest) {
   const session = request.cookies.get('da_bois_session')?.value;
   const { pathname } = request.nextUrl;
+
+  // Allow access to public routes
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
 
   // If user is trying to access a protected route without a session, redirect to login
   if (!session && protectedRoutes.some(route => pathname.startsWith(route))) {
