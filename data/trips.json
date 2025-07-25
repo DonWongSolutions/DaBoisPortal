@@ -17,8 +17,37 @@
             "description": "Test"
           }
         ]
+      },
+      {
+        "day": "2026-07-25",
+        "activities": [
+          {
+            "startTime": "14:42",
+            "endTime": "15:42",
+            "description": "Go Cart"
+          }
+        ]
       }
     ],
-    "costs": []
+    "costs": [
+      {
+        "id": 1753425640933,
+        "item": "Test",
+        "amount": 123,
+        "paidBy": "Isaac"
+      },
+      {
+        "id": 1753425677650,
+        "item": "Tax",
+        "amount": 23,
+        "paidBy": "Don"
+      },
+      {
+        "id": 1753425694724,
+        "item": "Da Bois Portal Service Fee",
+        "amount": 20,
+        "paidBy": "Don"
+      }
+    ]
   }
 ]
