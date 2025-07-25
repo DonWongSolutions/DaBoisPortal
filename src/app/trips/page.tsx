@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlusCircle, MapPin, Calendar, Users, ChevronsRight } from 'lucide-react';
-import type { Trip } from '@/lib/types';
+import type { Trip, User } from '@/lib/types';
 
 function TripCard({ trip }: { trip: Trip }) {
     const formatDateRange = (start: string, end: string) => {
@@ -68,12 +68,14 @@ export default async function TripsPage() {
         title="Trip Planner"
         description="Collaborate on trip itineraries and budgets."
       >
-        <Button asChild>
-            <Link href="/trips/new">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Plan a New Trip
-            </Link>
-        </Button>
+        {user.role !== 'parent' && (
+            <Button asChild>
+                <Link href="/trips/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Plan a New Trip
+                </Link>
+            </Button>
+        )}
       </PageHeader>
 
       {trips.length > 0 ? (
@@ -86,14 +88,16 @@ export default async function TripsPage() {
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
             <h3 className="text-2xl font-bold tracking-tight">No trips planned yet</h3>
             <p className="text-muted-foreground mb-4">
-                Get started by planning a new trip.
+                {user.role !== 'parent' ? "Get started by planning a new trip." : "No trips have been planned yet."}
             </p>
-            <Button asChild>
-                <Link href="/trips/new">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Plan a New Trip
-                </Link>
-            </Button>
+            {user.role !== 'parent' && (
+                <Button asChild>
+                    <Link href="/trips/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Plan a New Trip
+                    </Link>
+                </Button>
+            )}
         </div>
       )}
     </AppShell>

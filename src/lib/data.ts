@@ -2,11 +2,10 @@
 import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
-import type { User, Event, Trip, AppSettings } from './types';
+import type { User, Event, Trip, AppSettings, ChatMessage } from './types';
 
 const dataPath = path.join(process.cwd(), 'data');
 
-// Ensure data directory exists
 async function ensureDataDirectory() {
     try {
         await fs.access(dataPath);
@@ -20,7 +19,6 @@ async function readJsonFile<T>(filename: string, defaultValue: T): Promise<T> {
     const filePath = path.join(dataPath, filename);
     try {
         const fileContent = await fs.readFile(filePath, 'utf-8');
-        // Handle empty file case
         if (fileContent.trim() === '') {
             await writeJsonFile(filename, defaultValue);
             return defaultValue;
@@ -28,11 +26,9 @@ async function readJsonFile<T>(filename: string, defaultValue: T): Promise<T> {
         return JSON.parse(fileContent);
     } catch (error: any) {
         if (error.code === 'ENOENT') {
-            // If file doesn't exist, create it with default value
             await writeJsonFile(filename, defaultValue);
             return defaultValue;
         }
-        // If there's a parsing error with an existing file, it might be corrupt or empty
         if (error instanceof SyntaxError) {
              await writeJsonFile(filename, defaultValue);
              return defaultValue;
@@ -89,6 +85,16 @@ export async function getUsers(): Promise<User[]> {
         "birthday": "1998-11-30",
         "phone": "456-789-0123",
         "email": "nathan@dabois.com"
+      },
+      {
+        "id": 5,
+        "name": "Dad",
+        "password": "password",
+        "role": "parent",
+        "age": 55,
+        "birthday": "1969-01-01",
+        "phone": "555-555-5555",
+        "email": "dad@dabois.com"
       }
     ];
     return readJsonFile<User[]>('users.json', defaultUsers);
@@ -122,4 +128,12 @@ export async function getSettings(): Promise<AppSettings> {
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
     await writeJsonFile('settings.json', settings);
+}
+
+export async function getChatMessages(): Promise<ChatMessage[]> {
+    return readJsonFile<ChatMessage[]>('chat.json', []);
+}
+
+export async function saveChatMessages(messages: ChatMessage[]): Promise<void> {
+    await writeJsonFile('chat.json', messages);
 }

@@ -2,10 +2,12 @@
 'use client';
 
 import { useFormStatus } from 'react-dom';
-import { updateEventResponseAction, importCalendarAction } from '@/app/actions';
+import { updateEventResponseAction, importCalendarAction, addEventSuggestionAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
-import { Check, X, HelpCircle, Upload } from 'lucide-react';
+import { Check, X, HelpCircle, Upload, Send } from 'lucide-react';
 import type { UserAvailability } from '@/lib/types';
+import { Textarea } from '@/components/ui/textarea';
+import React from 'react';
 
 function ResponseButton({ status, currentResponse, children }: { status: UserAvailability, currentResponse: UserAvailability, children: React.ReactNode }) {
     const { pending } = useFormStatus();
@@ -70,4 +72,32 @@ export function ImportCalendarForm() {
             </Button>
         </form>
     )
+}
+
+function SuggestionButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" size="sm" className="w-full" disabled={pending}>
+            <Send className="mr-2 h-4 w-4" />
+            {pending ? 'Submitting...' : 'Submit Suggestion'}
+        </Button>
+    )
+}
+
+export function SuggestionForm({ eventId }: { eventId: number }) {
+    const addSuggestionWithId = addEventSuggestionAction.bind(null, eventId);
+    const formRef = React.useRef<HTMLFormElement>(null);
+    return (
+        <form 
+            action={async (formData) => {
+                await addSuggestionWithId(formData);
+                formRef.current?.reset();
+            }}
+            ref={formRef}
+            className="space-y-2"
+        >
+            <Textarea name="suggestion" placeholder="e.g., 'Let's move this to 8 PM?'" required />
+            <SuggestionButton />
+        </form>
+    );
 }

@@ -36,14 +36,16 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  MessageSquare,
 } from 'lucide-react';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/events', label: 'Events', icon: Calendar },
-  { href: '/schedule', label: 'Schedule', icon: CalendarCheck },
-  { href: '/trips', label: 'Trip Planner', icon: Plane },
-  { href: '/admin', label: 'Admin Settings', icon: Settings, adminOnly: true },
+  { href: '/dashboard', label: 'Dashboard', icon: Home, allowedRoles: ['admin', 'member', 'parent'] },
+  { href: '/events', label: 'Events', icon: Calendar, allowedRoles: ['admin', 'member', 'parent'] },
+  { href: '/schedule', label: 'Schedule', icon: CalendarCheck, allowedRoles: ['admin', 'member', 'parent'] },
+  { href: '/trips', label: 'Trip Planner', icon: Plane, allowedRoles: ['admin', 'member', 'parent'] },
+  { href: '/chat', label: 'Chat', icon: MessageSquare, allowedRoles: ['admin', 'member'] },
+  { href: '/admin', label: 'Admin Settings', icon: Settings, allowedRoles: ['admin'] },
 ];
 
 function UserMenu({ user }: { user: User }) {
@@ -85,27 +87,24 @@ function UserMenu({ user }: { user: User }) {
 function MainNav({ user }: { user: User }) {
   const pathname = usePathname();
   
+  const filteredNavItems = navItems.filter(item => user && item.allowedRoles.includes(user.role));
+
   return (
     <SidebarMenu>
-      {navItems.map((item) => {
-        if (item.adminOnly && user && user.role !== 'admin') {
-          return null;
-        }
-        return (
+      {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href} legacyBehavior passHref>
-                <SidebarMenuButton
-                as="a"
-                isActive={pathname === item.href}
-                tooltip={item.label}
-                >
-                <item.icon className="h-5 w-5" />
-                <span>{item.label}</span>
-                </SidebarMenuButton>
-            </Link>
+            <SidebarMenuButton
+              as={Link}
+              href={item.href}
+              isActive={pathname === item.href}
+              tooltip={item.label}
+            >
+              <item.icon className="h-5 w-5" />
+              <span>{item.label}</span>
+            </SidebarMenuButton>
           </SidebarMenuItem>
-        );
-      })}
+        )
+      )}
     </SidebarMenu>
   );
 }
@@ -134,16 +133,18 @@ export function AppShell({
           </SidebarContent>
           <SidebarFooter />
         </Sidebar>
-        <div className="flex flex-1 flex-col">
-          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 ml-auto w-full">
-            <SidebarTrigger className="md:hidden" />
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+            <div className="md:hidden">
+              <SidebarTrigger />
+            </div>
             <div className="flex-1" />
             <UserMenu user={user} />
           </header>
           <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
             {children}
           </main>
-          <footer className="p-4 text-center text-sm text-muted-foreground border-t w-full">
+          <footer className="p-4 text-center text-sm text-muted-foreground border-t">
             Copyright Da Bois 2025. All Rights Reserved. Developed by Don Wong.
           </footer>
         </div>

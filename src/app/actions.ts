@@ -4,8 +4,8 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
-import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings } from '@/lib/data';
-import type { AppSettings, Event, Trip, UserAvailability } from '@/lib/types';
+import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, getChatMessages, saveChatMessages } from '@/lib/data';
+import type { AppSettings, Event, Trip, UserAvailability, ChatMessage } from '@/lib/types';
 import * as ical from 'node-ical';
 
 
@@ -34,6 +34,10 @@ export async function logoutAction() {
 }
 
 export async function updateSettingsAction(settings: AppSettings) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return { success: false, message: 'Unauthorized.' };
+    }
     try {
         await saveSettings(settings);
         revalidatePath('/admin');
@@ -47,7 +51,7 @@ export async function updateSettingsAction(settings: AppSettings) {
 
 export async function createEventAction(formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser) {
+    if (!sessionUser || sessionUser.role === 'parent') {
         redirect('/login');
     }
 
@@ -61,7 +65,9 @@ export async function createEventAction(formData: FormData) {
         isFamilyEvent: formData.get('isFamilyEvent') === 'on',
         createdBy: sessionUser.name,
         responses: users.reduce((acc, user) => {
-            acc[user.name] = 'pending';
+            if (user.role !== 'parent') {
+                acc[user.name] = 'pending';
+            }
             return acc;
         }, {} as Record<string, 'yes' | 'no' | 'maybe' | 'pending'>),
     };
@@ -85,7 +91,6 @@ export async function updateEventAction(eventId: number, formData: FormData) {
     const events = await getEvents();
     const eventIndex = events.findIndex(e => e.id === eventId);
     if (eventIndex === -1) {
-        // Handle error, maybe redirect with a message
         redirect('/events');
     }
 
@@ -109,7 +114,7 @@ export async function updateEventAction(eventId: number, formData: FormData) {
 
 export async function updateEventResponseAction(eventId: number, formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser) {
+    if (!sessionUser || sessionUser.role === 'parent') {
         redirect('/login');
     }
 
@@ -126,15 +131,39 @@ export async function updateEventResponseAction(eventId: number, formData: FormD
     }
 }
 
+export async function addEventSuggestionAction(eventId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'parent') {
+        return;
+    }
+    const suggestion = formData.get('suggestion') as string;
+    if (!suggestion) return;
+
+    const events = await getEvents();
+    const event = events.find(e => e.id === eventId);
+
+    if (event) {
+        if (!event.suggestions) {
+            event.suggestions = [];
+        }
+        event.suggestions.push({
+            suggestedBy: sessionUser.name,
+            suggestion: suggestion
+        });
+        await saveEvents(events);
+        revalidatePath('/events');
+    }
+}
+
+
 export async function importCalendarAction(formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser) {
+    if (!sessionUser || sessionUser.role === 'parent') {
         redirect('/login');
     }
 
     const file = formData.get('calendarFile') as File;
     if (!file || file.size === 0) {
-        // Handle no file error
         return;
     }
 
@@ -144,7 +173,9 @@ export async function importCalendarAction(formData: FormData) {
     const events = await getEvents();
     const users = await getUsers();
     const allUsersResponses = users.reduce((acc, user) => {
-        acc[user.name] = 'pending';
+        if (user.role !== 'parent') {
+           acc[user.name] = 'pending';
+        }
         return acc;
     }, {} as Record<string, UserAvailability>);
 
@@ -153,11 +184,11 @@ export async function importCalendarAction(formData: FormData) {
             const calEvent = calendarEvents[key];
             if (calEvent.type === 'VEVENT') {
                 const newEvent: Event = {
-                    id: Date.now() + Math.random(), // Add random to avoid collisions in loop
+                    id: Date.now() + Math.random(),
                     title: calEvent.summary as string,
                     date: (calEvent.start as Date).toISOString().split('T')[0],
                     description: calEvent.description as string || '',
-                    isFamilyEvent: false, // Default value
+                    isFamilyEvent: false,
                     createdBy: sessionUser.name,
                     responses: { ...allUsersResponses },
                 };
@@ -175,7 +206,7 @@ export async function importCalendarAction(formData: FormData) {
 
 export async function createTripAction(formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser) {
+    if (!sessionUser || sessionUser.role === 'parent') {
         redirect('/login');
     }
 
@@ -202,11 +233,14 @@ export async function createTripAction(formData: FormData) {
 }
 
 export async function addItineraryItemAction(tripId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role === 'parent') {
+       return;
+    }
     const trips = await getTrips();
     const trip = trips.find(t => t.id === tripId);
 
     if (!trip) {
-        // Handle error
         return;
     }
 
@@ -233,10 +267,13 @@ export async function addItineraryItemAction(tripId: number, formData: FormData)
 }
 
 export async function addCostItemAction(tripId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role === 'parent') {
+       return;
+    }
     const trips = await getTrips();
     const trip = trips.find(t => t.id === tripId);
      if (!trip) {
-        // Handle error
         return;
     }
 
@@ -252,6 +289,58 @@ export async function addCostItemAction(tripId: number, formData: FormData) {
     revalidatePath(`/trips/${tripId}`);
 }
 
+export async function addTripSuggestionAction(tripId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'parent') {
+        return;
+    }
+    const suggestion = formData.get('suggestion') as string;
+    if (!suggestion) return;
+
+    const trips = await getTrips();
+    const trip = trips.find(t => t.id === tripId);
+
+    if (trip) {
+        if (!trip.suggestions) {
+            trip.suggestions = [];
+        }
+        trip.suggestions.push({
+            suggestedBy: sessionUser.name,
+            suggestion: suggestion
+        });
+        await saveTrips(trips);
+        revalidatePath(`/trips/${tripId}`);
+    }
+}
+
 export async function getSessionAction() {
   return await getSession();
+}
+
+export async function getChatMessagesAction() {
+    return await getChatMessages();
+}
+
+export async function sendChatMessageAction(formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role === 'parent') {
+        return;
+    }
+    const text = formData.get('message') as string;
+    if (!text.trim()) {
+        return;
+    }
+
+    const newMessage: ChatMessage = {
+        id: Date.now(),
+        author: sessionUser.name,
+        text: text.trim(),
+        timestamp: new Date().toISOString(),
+    };
+
+    const messages = await getChatMessages();
+    messages.push(newMessage);
+    await saveChatMessages(messages);
+
+    revalidatePath('/chat');
 }

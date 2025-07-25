@@ -39,5 +39,15 @@
     "birthday": "1998-11-30",
     "phone": "456-789-0123",
     "email": "nathan@dabois.com"
+  },
+  {
+    "id": 5,
+    "name": "Dad",
+    "password": "password",
+    "role": "parent",
+    "age": 55,
+    "birthday": "1969-01-01",
+    "phone": "555-555-5555",
+    "email": "dad@dabois.com"
   }
 ]

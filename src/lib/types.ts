@@ -1,9 +1,9 @@
 
 export interface User {
   id: number;
-  name: 'Don' | 'Isaac' | 'Xavier' | 'Nathan';
+  name: 'Don' | 'Isaac' | 'Xavier' | 'Nathan' | 'Dad';
   password?: string;
-  role: 'admin' | 'member';
+  role: 'admin' | 'member' | 'parent';
   age: number;
   birthday: string;
   phone: string;
@@ -11,6 +11,11 @@ export interface User {
 }
 
 export type UserAvailability = 'yes' | 'no' | 'maybe' | 'pending';
+
+export interface EventSuggestion {
+  suggestedBy: string;
+  suggestion: string;
+}
 
 export interface Event {
   id: number;
@@ -20,6 +25,7 @@ export interface Event {
   isFamilyEvent: boolean;
   createdBy: string;
   responses: Record<string, UserAvailability>;
+  suggestions?: EventSuggestion[];
 }
 
 export interface ItineraryActivity {
@@ -49,10 +55,18 @@ export interface Trip {
   attendees: string[];
   itinerary: ItineraryDay[];
   costs: TripCost[];
+  suggestions?: { suggestedBy: string; suggestion: string }[];
 }
 
 export interface AppSettings {
     maintenanceMode: boolean;
     loginImageUrl: string;
     dashboardBannerUrl: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  author: string;
+  text: string;
+  timestamp: string;
 }

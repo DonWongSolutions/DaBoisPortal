@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { redirect, useParams } from 'next/navigation';
 import { getTrips } from '@/lib/data.client';
 import { AppShell } from '@/components/app-shell';
@@ -14,20 +14,21 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { addItineraryItemAction, addCostItemAction, getSessionAction } from '@/app/actions';
-import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle } from 'lucide-react';
+import { addItineraryItemAction, addCostItemAction, getSessionAction, addTripSuggestionAction } from '@/app/actions';
+import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send } from 'lucide-react';
 import type { Trip, User } from '@/lib/types';
 import { useFormStatus } from 'react-dom';
+import { Separator } from '@/components/ui/separator';
 
 function AddItineraryForm({ trip }: { trip: Trip }) {
     const { pending } = useFormStatus();
     const addItineraryItemWithTripId = addItineraryItemAction.bind(null, trip.id);
-    const [form, setForm] = useState<HTMLFormElement | null>(null);
+    const formRef = useRef<HTMLFormElement>(null);
 
     return (
-        <form ref={setForm} action={async (formData) => {
+        <form ref={formRef} action={async (formData) => {
             await addItineraryItemWithTripId(formData);
-            form?.reset();
+            formRef.current?.reset();
         }}>
             <Card>
                 <CardHeader>
@@ -60,12 +61,12 @@ function AddItineraryForm({ trip }: { trip: Trip }) {
 function AddCostForm({ trip }: { trip: Trip }) {
     const { pending } = useFormStatus();
     const addCostItemWithTripId = addCostItemAction.bind(null, trip.id);
-    const [form, setForm] = useState<HTMLFormElement | null>(null);
+    const formRef = useRef<HTMLFormElement>(null);
 
     return (
-        <form ref={setForm} action={async (formData) => {
+        <form ref={formRef} action={async (formData) => {
             await addCostItemWithTripId(formData);
-            form?.reset();
+            formRef.current?.reset();
         }}>
             <Card>
                 <CardHeader>
@@ -97,6 +98,33 @@ function AddCostForm({ trip }: { trip: Trip }) {
                 <CardFooter>
                     <Button type="submit" disabled={pending}>
                         <PlusCircle className="mr-2 h-4 w-4" /> {pending ? 'Adding...' : 'Add Cost'}
+                    </Button>
+                </CardFooter>
+            </Card>
+        </form>
+    );
+}
+
+function AddSuggestionForm({ tripId }: { tripId: number }) {
+    const { pending } = useFormStatus();
+    const addSuggestionWithId = addTripSuggestionAction.bind(null, tripId);
+    const formRef = useRef<HTMLFormElement>(null);
+
+    return (
+        <form ref={formRef} action={async (formData) => {
+            await addSuggestionWithId(formData);
+            formRef.current?.reset();
+        }}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Add Suggestion</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Textarea name="suggestion" placeholder="e.g., 'We should visit the museum.'" required />
+                </CardContent>
+                <CardFooter>
+                     <Button type="submit" disabled={pending} className="w-full">
+                        <Send className="mr-2 h-4 w-4" /> {pending ? 'Submitting...' : 'Submit Suggestion'}
                     </Button>
                 </CardFooter>
             </Card>
@@ -141,11 +169,11 @@ export default function TripDetailsPage() {
     }, [tripId]);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-full">Loading...</div>;
     }
     
     if (!user || !trip) {
-        return <div>Error loading page. Please try logging in again.</div>;
+        return <div className="flex justify-center items-center h-full">Error loading page. Please try logging in again.</div>;
     }
     
     const formatDate = (dateString: string) => {
@@ -229,6 +257,19 @@ export default function TripDetailsPage() {
                              </CardFooter>
                         )}
                     </Card>
+                    {/* Suggestions */}
+                    {trip.suggestions && trip.suggestions.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><Lightbulb className="h-5 w-5" /> Suggestions</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                {trip.suggestions.map((s, i) => (
+                                     <p key={i} className="text-sm text-muted-foreground"><strong>{s.suggestedBy}:</strong> {s.suggestion}</p>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
                 <div className="lg:col-span-1 space-y-8">
                      {/* Trip Info */}
@@ -258,8 +299,14 @@ export default function TripDetailsPage() {
                             </div>
                         </CardContent>
                     </Card>
-                    <AddItineraryForm trip={trip} />
-                    <AddCostForm trip={trip} />
+                    {user.role === 'parent' ? (
+                        <AddSuggestionForm tripId={trip.id} />
+                    ) : (
+                       <>
+                        <AddItineraryForm trip={trip} />
+                        <AddCostForm trip={trip} />
+                       </>
+                    )}
                 </div>
             </div>
         </AppShell>

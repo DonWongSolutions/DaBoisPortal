@@ -8,10 +8,10 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, PlusCircle, Users, User, CheckCircle, XCircle, HelpCircle, MoreHorizontal, Upload } from 'lucide-react';
+import { Pencil, PlusCircle, Users, User, CheckCircle, XCircle, HelpCircle, MoreHorizontal, MessageSquare, Lightbulb } from 'lucide-react';
 import type { Event, User as TUser, UserAvailability } from '@/lib/types';
-import { EventResponseForm, ImportCalendarForm } from './event-actions';
-
+import { EventResponseForm, ImportCalendarForm, SuggestionForm } from './event-actions';
+import { Separator } from '@/components/ui/separator';
 
 function AvailabilityBadge({ status }: { status: UserAvailability }) {
     const statusMap = {
@@ -27,7 +27,6 @@ function AvailabilityBadge({ status }: { status: UserAvailability }) {
 function EventCard({ event, user }: { event: Event, user: TUser }) {
     const eventDate = new Date(event.date);
     const now = new Date();
-    // Set hours to 0 to compare dates only
     eventDate.setHours(0,0,0,0);
     now.setHours(0,0,0,0);
     const isPast = eventDate < now;
@@ -54,12 +53,30 @@ function EventCard({ event, user }: { event: Event, user: TUser }) {
                         </div>
                     ))}
                 </div>
+                 {event.suggestions && event.suggestions.length > 0 && (
+                    <div className="mt-4">
+                        <Separator className="my-4" />
+                        <h4 className="text-sm font-medium flex items-center gap-2"><Lightbulb className="h-4 w-4" /> Suggestions</h4>
+                        <div className="mt-2 space-y-2 text-sm text-muted-foreground">
+                            {event.suggestions.map((s, i) => (
+                                <p key={i}><strong>{s.suggestedBy}:</strong> {s.suggestion}</p>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </CardContent>
             <CardFooter className="flex flex-col items-start gap-4 border-t pt-4">
-               <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Your Response</h4>
-                  <EventResponseForm eventId={event.id} currentResponse={event.responses[user.name] as UserAvailability} />
-               </div>
+               {user.role !== 'parent' ? (
+                 <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Your Response</h4>
+                    <EventResponseForm eventId={event.id} currentResponse={event.responses[user.name] as UserAvailability} />
+                 </div>
+               ) : (
+                <div className="w-full">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Suggest an Edit</h4>
+                    <SuggestionForm eventId={event.id} />
+                </div>
+               )}
 
                 {user.role === 'admin' && (
                      <Button variant="outline" size="sm" asChild className="w-full">
@@ -87,15 +104,17 @@ export default async function EventsPage() {
         title="Events"
         description="Schedule, view, and respond to events."
       >
-        <div className="flex items-center gap-2">
-           <ImportCalendarForm />
-            <Button asChild>
-                <Link href="/events/new">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create Event
-                </Link>
-            </Button>
-        </div>
+        {user.role !== 'parent' && (
+            <div className="flex items-center gap-2">
+               <ImportCalendarForm />
+                <Button asChild>
+                    <Link href="/events/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Event
+                    </Link>
+                </Button>
+            </div>
+        )}
       </PageHeader>
       
       {events.length > 0 ? (
@@ -108,17 +127,19 @@ export default async function EventsPage() {
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
             <h3 className="text-2xl font-bold tracking-tight">No events yet</h3>
             <p className="text-muted-foreground mb-4">
-                Get started by creating a new event or importing a calendar.
+                {user.role !== 'parent' ? "Get started by creating a new event or importing a calendar." : "No events have been created yet."}
             </p>
-             <div className="flex items-center gap-2">
-                <ImportCalendarForm />
-                <Button asChild>
-                    <Link href="/events/new">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create Event
-                    </Link>
-                </Button>
-            </div>
+             {user.role !== 'parent' && (
+                <div className="flex items-center gap-2">
+                    <ImportCalendarForm />
+                    <Button asChild>
+                        <Link href="/events/new">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create Event
+                        </Link>
+                    </Button>
+                </div>
+            )}
         </div>
       )}
     </AppShell>
