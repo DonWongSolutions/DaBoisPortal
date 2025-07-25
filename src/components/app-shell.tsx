@@ -61,7 +61,7 @@ function UserMenu({ user }: { user: User }) {
         >
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={`https://placehold.co/40x40.png`}
+              src={user.profilePictureUrl}
               alt={user.name}
               data-ai-hint="user avatar"
             />

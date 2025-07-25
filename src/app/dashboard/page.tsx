@@ -75,7 +75,7 @@ export default async function DashboardPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
-                    <AvatarImage src={`https://placehold.co/64x64.png`} data-ai-hint="user avatar" />
+                    <AvatarImage src={user.profilePictureUrl} data-ai-hint="user avatar" />
                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>

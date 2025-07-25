@@ -308,7 +308,7 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
                                 {trip.attendees.map(name => (
                                      <div key={name} className="flex items-center gap-2">
                                         <Avatar className="h-6 w-6">
-                                            <AvatarImage src={`https://placehold.co/32x32`} data-ai-hint="user avatar" />
+                                            <AvatarImage src={allUsers.find(u => u.name === name)?.profilePictureUrl} data-ai-hint="user avatar" />
                                             <AvatarFallback>{name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <span className="text-sm">{name}</span>

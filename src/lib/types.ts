@@ -8,6 +8,7 @@ export interface User {
   birthday: string;
   phone: string;
   email: string;
+  profilePictureUrl?: string;
 }
 
 export type UserAvailability = 'yes' | 'no' | 'maybe' | 'pending';

@@ -86,7 +86,7 @@ export default function ChatPage() {
                              <div key={msg.id} className={`flex items-start gap-3 ${msg.author === user.name ? 'justify-end' : ''}`}>
                                 {msg.author !== user.name && (
                                     <Avatar className="h-8 w-8">
-                                        <AvatarImage src={`https://placehold.co/32x32.png`} data-ai-hint="user avatar" />
+                                        <AvatarImage src={''} data-ai-hint="user avatar" />
                                         <AvatarFallback>{msg.author.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                 )}
@@ -100,7 +100,7 @@ export default function ChatPage() {
                                 </div>
                                  {msg.author === user.name && (
                                     <Avatar className="h-8 w-8">
-                                        <AvatarImage src={`https://placehold.co/32x32.png`} data-ai-hint="user avatar" />
+                                        <AvatarImage src={user.profilePictureUrl} data-ai-hint="user avatar" />
                                         <AvatarFallback>{msg.author.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                 )}

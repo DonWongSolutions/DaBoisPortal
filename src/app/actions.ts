@@ -55,6 +55,10 @@ export async function updateUserAction(formData: FormData) {
     const updatedUser: User = { ...users[userIndex] };
     updatedUser.email = formData.get('email') as string;
     updatedUser.phone = formData.get('phone') as string;
+    if (formData.has('profilePictureUrl')) {
+        updatedUser.profilePictureUrl = formData.get('profilePictureUrl') as string;
+    }
+
     if (newPassword) {
         updatedUser.password = newPassword;
     }

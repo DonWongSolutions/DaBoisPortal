@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getSession } from '@/lib/auth';
-import { getTrips } from '@/lib/data';
+import { getTrips, getUsers } from '@/lib/data';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlusCircle, MapPin, Calendar, Users, ChevronsRight } from 'lucide-react';
 import type { Trip, User } from '@/lib/types';
 
-function TripCard({ trip }: { trip: Trip }) {
+async function TripCard({ trip }: { trip: Trip }) {
+    const allUsers = await getUsers();
     const formatDateRange = (start: string, end: string) => {
         const startDate = new Date(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const endDate = new Date(end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -38,7 +39,7 @@ function TripCard({ trip }: { trip: Trip }) {
                  <div className="flex -space-x-2 overflow-hidden pt-2">
                     {trip.attendees.map(name => (
                          <Avatar key={name} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                            <AvatarImage src={`https://placehold.co/32x32`} data-ai-hint="user avatar" />
+                            <AvatarImage src={allUsers.find(u => u.name === name)?.profilePictureUrl} data-ai-hint="user avatar" />
                             <AvatarFallback>{name.charAt(0)}</AvatarFallback>
                         </Avatar>
                     ))}

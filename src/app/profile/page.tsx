@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import type { User } from '@/lib/types';
 
 function ProfileForm({ user }: { user: User }) {
@@ -46,11 +47,31 @@ function ProfileForm({ user }: { user: User }) {
                 <CardContent className="space-y-6">
                      <div className="flex items-center gap-4">
                         <Avatar className="h-20 w-20">
-                            <AvatarImage src={`https://placehold.co/80x80.png`} data-ai-hint="user avatar" />
+                            <AvatarImage src={user.profilePictureUrl} data-ai-hint="user avatar" />
                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <Button variant="outline" disabled={user.role !== 'admin'}>Change Picture</Button>
-                         {user.role !== 'admin' && <p className="text-sm text-muted-foreground">Only admins can change profile pictures.</p>}
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline">Change Picture</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Change Profile Picture</DialogTitle>
+                                    <DialogDescription>
+                                        To change your profile picture, please upload an image to <a href="https://upload.cc/" target="_blank" rel="noopener noreferrer" className="underline">upload.cc</a>, then paste the full image URL below.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-2">
+                                    <Label htmlFor="profilePictureUrl">Image URL</Label>
+                                    <Input id="profilePictureUrl" name="profilePictureUrl" defaultValue={user.profilePictureUrl} />
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button type="submit">Save</Button>
+                                    </DialogClose>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                     <Separator />
                     <div className="space-y-2">
