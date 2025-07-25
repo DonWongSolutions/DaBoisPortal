@@ -35,7 +35,7 @@ export function LoginForm({ users }: { users: User[] }) {
   const [state, dispatch] = useActionState(loginAction, initialState);
 
   return (
-    <Card className="w-full max-w-md shadow-2xl">
+    <Card className="w-full max-w-md shadow-2xl border-none">
       <CardHeader className="text-center">
         <div className="mx-auto mb-4">
             <Icons.Logo className="h-12 w-12 text-primary"/>
