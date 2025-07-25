@@ -124,8 +124,8 @@ function MainNav({ user }: { user: User }) {
         )
       )}
 
-      <Collapsible>
-        <SidebarMenuItem>
+      <SidebarMenuItem>
+          <Collapsible>
             <CollapsibleTrigger className="w-full">
                 <SidebarMenuButton isSubmenu isActive={pathname.startsWith('/wiki')} className="w-full">
                     <BookOpen className="h-5 w-5" />
@@ -148,8 +148,8 @@ function MainNav({ user }: { user: User }) {
                     )}
                 </SidebarMenuSub>
             </CollapsibleContent>
-        </SidebarMenuItem>
-      </Collapsible>
+          </Collapsible>
+      </SidebarMenuItem>
 
 
       {user.role === 'admin' && (
