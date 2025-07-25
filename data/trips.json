@@ -1,2 +1,13 @@
-
-[]
+[
+  {
+    "id": 1753413530822,
+    "name": "Shenzhen Test",
+    "destination": "Shzhen",
+    "startDate": "2026-07-25",
+    "endDate": "2026-07-30",
+    "createdBy": "Don",
+    "attendees": [],
+    "itinerary": [],
+    "costs": []
+  }
+]
