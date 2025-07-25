@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { loginAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,7 @@ function SubmitButton() {
 
 export function LoginForm({ users }: { users: User[] }) {
   const initialState = { message: null };
-  const [state, dispatch] = useFormState(loginAction, initialState);
+  const [state, dispatch] = useActionState(loginAction, initialState);
 
   return (
     <Card className="w-full max-w-md shadow-2xl">

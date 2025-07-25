@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useActionState } from 'react';
 import { redirect } from 'next/navigation';
-import { useFormState } from 'react-dom';
 import { getSession } from '@/lib/auth';
 import { getSettings } from '@/lib/data';
 import { AppShell } from '@/components/app-shell';
@@ -21,7 +20,7 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
     const { toast } = useToast();
     const [currentSettings, setCurrentSettings] = useState(settings);
     
-    const [state, formAction] = useFormState(async (prevState: any, formData: FormData) => {
+    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         const newSettings = {
             maintenanceMode: formData.get('maintenanceMode') === 'on',
             loginImageUrl: formData.get('loginImageUrl') as string,
