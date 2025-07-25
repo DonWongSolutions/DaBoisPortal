@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState } from 'react';
+import { useEffect, useState, useActionState, useRef } from 'react';
 import { redirect } from 'next/navigation';
 import { getSessionAction, updateUserAction } from '@/app/actions';
 import { AppShell } from '@/components/app-shell';
@@ -15,9 +15,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import type { User } from '@/lib/types';
+import { format } from 'date-fns';
 
-function ProfileForm({ user }: { user: User }) {
+function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: User) => void }) {
     const { toast } = useToast();
+    const formRef = useRef<HTMLFormElement>(null);
+    const [openDialog, setOpenDialog] = useState(false);
     
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         const result = await updateUserAction(formData);
@@ -26,6 +29,13 @@ function ProfileForm({ user }: { user: User }) {
                 title: "Success",
                 description: result.message,
             });
+            const updatedUser = await getSessionAction();
+            if (updatedUser) {
+                onUserUpdate(updatedUser);
+            }
+            if (formData.has('profilePictureUrl')) {
+               setOpenDialog(false);
+            }
         } else {
              toast({
                 variant: "destructive",
@@ -38,7 +48,7 @@ function ProfileForm({ user }: { user: User }) {
 
 
     return (
-        <form action={formAction}>
+        <form action={formAction} ref={formRef}>
             <Card>
                 <CardHeader>
                     <CardTitle>Edit Your Profile</CardTitle>
@@ -50,7 +60,7 @@ function ProfileForm({ user }: { user: User }) {
                             <AvatarImage src={user.profilePictureUrl} data-ai-hint="user avatar" />
                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <Dialog>
+                        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                             <DialogTrigger asChild>
                                 <Button variant="outline">Change Picture</Button>
                             </DialogTrigger>
@@ -66,21 +76,25 @@ function ProfileForm({ user }: { user: User }) {
                                     <Input id="profilePictureUrl" name="profilePictureUrl" defaultValue={user.profilePictureUrl} />
                                 </div>
                                 <DialogFooter>
-                                    <DialogClose asChild>
-                                        <Button type="submit">Save</Button>
-                                    </DialogClose>
+                                    <Button type="submit">Save</Button>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
                     </div>
                     <Separator />
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" name="email" type="email" defaultValue={user.email} required />
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input id="email" name="email" type="email" defaultValue={user.email} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="phone">Phone Number</Label>
+                            <Input id="phone" name="phone" defaultValue={user.phone} required />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input id="phone" name="phone" defaultValue={user.phone} required />
+                     <div className="space-y-2">
+                        <Label htmlFor="birthday">Date of Birth</Label>
+                        <Input id="birthday" name="birthday" type="date" defaultValue={format(new Date(user.birthday), 'yyyy-MM-dd')} required />
                     </div>
                      <Separator />
                      <p className="text-sm text-muted-foreground">Update your password. Leave blank to keep it unchanged.</p>
@@ -108,23 +122,24 @@ export default function ProfilePage() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const sessionUser = await getSessionAction();
-                if (!sessionUser) {
-                    redirect('/login');
-                    return;
-                }
-                setUser(sessionUser);
-            } catch (error) {
-                console.error("Failed to fetch data:", error);
+    const fetchUser = async () => {
+        try {
+            const sessionUser = await getSessionAction();
+            if (!sessionUser) {
                 redirect('/login');
-            } finally {
-                setLoading(false);
+                return;
             }
+            setUser(sessionUser);
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+            redirect('/login');
+        } finally {
+            setLoading(false);
         }
-        fetchData();
+    }
+
+    useEffect(() => {
+        fetchUser();
     }, []);
 
     if (loading) {
@@ -142,7 +157,7 @@ export default function ProfilePage() {
                 description="Manage your account details."
             />
             <div className="max-w-2xl mx-auto">
-                <ProfileForm user={user} />
+                <ProfileForm user={user} onUserUpdate={setUser} />
             </div>
         </AppShell>
     );

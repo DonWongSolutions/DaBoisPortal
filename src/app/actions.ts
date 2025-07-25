@@ -33,6 +33,17 @@ export async function logoutAction() {
   redirect('/login');
 }
 
+function calculateAge(birthday: string): number {
+    const birthDate = new Date(birthday);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+}
+
 export async function updateUserAction(formData: FormData) {
     const sessionUser = await getSession();
     if (!sessionUser) {
@@ -55,8 +66,18 @@ export async function updateUserAction(formData: FormData) {
     const updatedUser: User = { ...users[userIndex] };
     updatedUser.email = formData.get('email') as string;
     updatedUser.phone = formData.get('phone') as string;
+    
+    if (formData.has('birthday') && formData.get('birthday')) {
+        const birthday = formData.get('birthday') as string;
+        updatedUser.birthday = birthday;
+        updatedUser.age = calculateAge(birthday);
+    }
+
     if (formData.has('profilePictureUrl')) {
-        updatedUser.profilePictureUrl = formData.get('profilePictureUrl') as string;
+        const profilePicUrl = formData.get('profilePictureUrl') as string;
+        if(profilePicUrl) {
+           updatedUser.profilePictureUrl = profilePicUrl;
+        }
     }
 
     if (newPassword) {
@@ -66,7 +87,7 @@ export async function updateUserAction(formData: FormData) {
     users[userIndex] = updatedUser;
     await saveUsers(users);
 
-    // Re-authenticate user with potentially new details, except password
+    // Re-authenticate user with potentially new details to update the session
     await setSession(updatedUser.name);
     
     revalidatePath('/profile');
@@ -193,7 +214,7 @@ export async function updateEventResponseAction(eventId: number, formData: FormD
 
 export async function addEventSuggestionAction(eventId: number, formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser || sessionUser.role !== 'parent') {
+    if (!sessionUser || sessionUser.role === 'parent') {
         return;
     }
     const suggestion = formData.get('suggestion') as string;
@@ -368,7 +389,7 @@ export async function addCostItemAction(tripId: number, formData: FormData) {
 
 export async function addTripSuggestionAction(tripId: number, formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser || sessionUser.role !== 'parent') {
+    if (!sessionUser || sessionUser.role === 'parent') {
         return;
     }
     const suggestion = formData.get('suggestion') as string;
