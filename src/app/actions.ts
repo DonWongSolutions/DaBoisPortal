@@ -5,7 +5,9 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
 import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings } from '@/lib/data';
-import type { AppSettings, Event, Trip } from '@/lib/types';
+import type { AppSettings, Event, Trip, UserAvailability } from '@/lib/types';
+import * as ical from 'node-ical';
+
 
 export async function loginAction(prevState: any, formData: FormData) {
   const name = formData.get('name') as string;
@@ -68,6 +70,103 @@ export async function createEventAction(formData: FormData) {
     events.push(newEvent);
     await saveEvents(events);
 
+    revalidatePath('/events');
+    revalidatePath('/dashboard');
+    revalidatePath('/schedule');
+    redirect('/events');
+}
+
+export async function updateEventAction(eventId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        redirect('/login');
+    }
+
+    const events = await getEvents();
+    const eventIndex = events.findIndex(e => e.id === eventId);
+    if (eventIndex === -1) {
+        // Handle error, maybe redirect with a message
+        redirect('/events');
+    }
+
+    const updatedEvent: Partial<Event> = {
+        title: formData.get('title') as string,
+        date: formData.get('date') as string,
+        description: formData.get('description') as string,
+        isFamilyEvent: formData.get('isFamilyEvent') === 'on',
+    };
+
+    events[eventIndex] = { ...events[eventIndex], ...updatedEvent };
+    await saveEvents(events);
+
+    revalidatePath(`/events`);
+    revalidatePath(`/events/${eventId}/edit`);
+    revalidatePath('/dashboard');
+    revalidatePath('/schedule');
+    redirect('/events');
+}
+
+
+export async function updateEventResponseAction(eventId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser) {
+        redirect('/login');
+    }
+
+    const response = formData.get('response') as UserAvailability;
+    const events = await getEvents();
+    const event = events.find(e => e.id === eventId);
+
+    if (event) {
+        event.responses[sessionUser.name] = response;
+        await saveEvents(events);
+        revalidatePath('/events');
+        revalidatePath('/dashboard');
+        revalidatePath('/schedule');
+    }
+}
+
+export async function importCalendarAction(formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser) {
+        redirect('/login');
+    }
+
+    const file = formData.get('calendarFile') as File;
+    if (!file || file.size === 0) {
+        // Handle no file error
+        return;
+    }
+
+    const fileContent = await file.text();
+    const calendarEvents = ical.parseICS(fileContent);
+    
+    const events = await getEvents();
+    const users = await getUsers();
+    const allUsersResponses = users.reduce((acc, user) => {
+        acc[user.name] = 'pending';
+        return acc;
+    }, {} as Record<string, UserAvailability>);
+
+    for (const key in calendarEvents) {
+        if (calendarEvents.hasOwnProperty(key)) {
+            const calEvent = calendarEvents[key];
+            if (calEvent.type === 'VEVENT') {
+                const newEvent: Event = {
+                    id: Date.now() + Math.random(), // Add random to avoid collisions in loop
+                    title: calEvent.summary as string,
+                    date: (calEvent.start as Date).toISOString().split('T')[0],
+                    description: calEvent.description as string || '',
+                    isFamilyEvent: false, // Default value
+                    createdBy: sessionUser.name,
+                    responses: { ...allUsersResponses },
+                };
+                events.push(newEvent);
+            }
+        }
+    }
+
+    await saveEvents(events);
     revalidatePath('/events');
     revalidatePath('/dashboard');
     revalidatePath('/schedule');

@@ -8,8 +8,10 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Users, User, CheckCircle, XCircle, HelpCircle, MoreHorizontal } from 'lucide-react';
-import type { Event, UserAvailability } from '@/lib/types';
+import { Pencil, PlusCircle, Users, User, CheckCircle, XCircle, HelpCircle, MoreHorizontal, Upload } from 'lucide-react';
+import type { Event, User as TUser, UserAvailability } from '@/lib/types';
+import { EventResponseForm, ImportCalendarForm } from './event-actions';
+
 
 function AvailabilityBadge({ status }: { status: UserAvailability }) {
     const statusMap = {
@@ -22,7 +24,7 @@ function AvailabilityBadge({ status }: { status: UserAvailability }) {
     return <Icon className={`h-5 w-5 ${color}`} title={label} />;
 }
 
-function EventCard({ event }: { event: Event }) {
+function EventCard({ event, user }: { event: Event, user: TUser }) {
     const eventDate = new Date(event.date);
     const now = new Date();
     // Set hours to 0 to compare dates only
@@ -31,22 +33,20 @@ function EventCard({ event }: { event: Event }) {
     const isPast = eventDate < now;
     
     return (
-        <Card className={isPast ? 'opacity-60' : ''}>
+        <Card className={`flex flex-col ${isPast ? 'opacity-60' : ''}`}>
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
                         <CardTitle>{event.title}</CardTitle>
                         <CardDescription>{new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
                     </div>
-                    {event.isFamilyEvent ? <Badge variant="secondary"><Users className="mr-1 h-3 w-3" /> Family</Badge> : <Badge variant="secondary"><User className="mr-1 h-3 w-3" /> Personal</Badge>}
+                     {event.isFamilyEvent ? <Badge variant="secondary"><Users className="mr-1 h-3 w-3" /> Family</Badge> : <Badge variant="secondary"><User className="mr-1 h-3 w-3" /> Personal</Badge>}
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-grow">
                 <p className="text-sm text-muted-foreground">{event.description}</p>
-            </CardContent>
-            <CardFooter className="flex flex-col items-start gap-4">
-                <div className="text-sm font-medium">Who's going?</div>
-                <div className="flex gap-6">
+                 <div className="mt-4 text-sm font-medium">Who's going?</div>
+                 <div className="flex flex-wrap gap-6 mt-2">
                     {Object.entries(event.responses).map(([name, status]) => (
                         <div key={name} className="flex flex-col items-center gap-1">
                            <AvailabilityBadge status={status as UserAvailability} />
@@ -54,6 +54,21 @@ function EventCard({ event }: { event: Event }) {
                         </div>
                     ))}
                 </div>
+            </CardContent>
+            <CardFooter className="flex flex-col items-start gap-4 border-t pt-4">
+               <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Your Response</h4>
+                  <EventResponseForm eventId={event.id} currentResponse={event.responses[user.name] as UserAvailability} />
+               </div>
+
+                {user.role === 'admin' && (
+                     <Button variant="outline" size="sm" asChild className="w-full">
+                        <Link href={`/events/${event.id}/edit`}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit Event
+                        </Link>
+                    </Button>
+                )}
             </CardFooter>
         </Card>
     )
@@ -72,32 +87,38 @@ export default async function EventsPage() {
         title="Events"
         description="Schedule, view, and respond to events."
       >
-        <Button asChild>
-          <Link href="/events/new">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create Event
-          </Link>
-        </Button>
-      </PageHeader>
-      
-      {events.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {events.map(event => (
-              <EventCard key={event.id} event={event} />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
-            <h3 className="text-2xl font-bold tracking-tight">No events yet</h3>
-            <p className="text-muted-foreground mb-4">
-                Get started by creating a new event.
-            </p>
+        <div className="flex items-center gap-2">
+           <ImportCalendarForm />
             <Button asChild>
                 <Link href="/events/new">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create Event
                 </Link>
             </Button>
+        </div>
+      </PageHeader>
+      
+      {events.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {events.map(event => (
+              <EventCard key={event.id} event={event} user={user} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
+            <h3 className="text-2xl font-bold tracking-tight">No events yet</h3>
+            <p className="text-muted-foreground mb-4">
+                Get started by creating a new event or importing a calendar.
+            </p>
+             <div className="flex items-center gap-2">
+                <ImportCalendarForm />
+                <Button asChild>
+                    <Link href="/events/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Event
+                    </Link>
+                </Button>
+            </div>
         </div>
       )}
     </AppShell>

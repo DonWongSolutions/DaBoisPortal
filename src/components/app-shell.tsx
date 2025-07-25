@@ -93,16 +93,16 @@ function MainNav({ user }: { user: User }) {
         }
         return (
           <SidebarMenuItem key={item.href}>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === item.href}
-              tooltip={item.label}
-            >
-              <Link href={item.href}>
+            <Link href={item.href} legacyBehavior passHref>
+                <SidebarMenuButton
+                as="a"
+                isActive={pathname === item.href}
+                tooltip={item.label}
+                >
                 <item.icon className="h-5 w-5" />
                 <span>{item.label}</span>
-              </Link>
-            </SidebarMenuButton>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
         );
       })}
@@ -135,7 +135,7 @@ export function AppShell({
           <SidebarFooter />
         </Sidebar>
         <div className="flex flex-1 flex-col">
-          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 ml-auto w-full">
             <SidebarTrigger className="md:hidden" />
             <div className="flex-1" />
             <UserMenu user={user} />
@@ -143,7 +143,7 @@ export function AppShell({
           <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
             {children}
           </main>
-          <footer className="p-4 text-center text-sm text-muted-foreground border-t">
+          <footer className="p-4 text-center text-sm text-muted-foreground border-t w-full">
             Copyright Da Bois 2025. All Rights Reserved. Developed by Don Wong.
           </footer>
         </div>
