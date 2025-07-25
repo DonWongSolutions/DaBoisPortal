@@ -1,0 +1,43 @@
+
+[
+  {
+    "id": 1,
+    "name": "Don",
+    "password": "Frank",
+    "role": "admin",
+    "age": 28,
+    "birthday": "1996-05-10",
+    "phone": "123-456-7890",
+    "email": "don@dabois.com"
+  },
+  {
+    "id": 2,
+    "name": "Isaac",
+    "password": "Ballsac",
+    "role": "member",
+    "age": 27,
+    "birthday": "1997-08-15",
+    "phone": "234-567-8901",
+    "email": "isaac@dabois.com"
+  },
+  {
+    "id": 3,
+    "name": "Xavier",
+    "password": "Egg",
+    "role": "member",
+    "age": 28,
+    "birthday": "1996-03-22",
+    "phone": "345-678-9012",
+    "email": "xavier@dabois.com"
+  },
+  {
+    "id": 4,
+    "name": "Nathan",
+    "password": "Eczema",
+    "role": "member",
+    "age": 26,
+    "birthday": "1998-11-30",
+    "phone": "456-789-0123",
+    "email": "nathan@dabois.com"
+  }
+]

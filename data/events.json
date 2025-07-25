@@ -1,0 +1,45 @@
+
+[
+  {
+    "id": 1,
+    "title": "Weekly Game Night",
+    "date": "2025-07-25",
+    "description": "Team Fortress 2 session. Don't be late!",
+    "isFamilyEvent": false,
+    "createdBy": "Don",
+    "responses": {
+      "Don": "yes",
+      "Isaac": "yes",
+      "Xavier": "maybe",
+      "Nathan": "no"
+    }
+  },
+  {
+    "id": 2,
+    "title": "Summer BBQ",
+    "date": "2025-08-02",
+    "description": "Annual summer BBQ at Don's place. Families invited.",
+    "isFamilyEvent": true,
+    "createdBy": "Don",
+    "responses": {
+      "Don": "yes",
+      "Isaac": "yes",
+      "Xavier": "yes",
+      "Nathan": "yes"
+    }
+  },
+  {
+    "id": 3,
+    "title": "Beach Day",
+    "date": "2025-08-10",
+    "description": "Hitting up the beach if the weather is good.",
+    "isFamilyEvent": false,
+    "createdBy": "Isaac",
+    "responses": {
+      "Don": "maybe",
+      "Isaac": "yes",
+      "Xavier": "yes",
+      "Nathan": "maybe"
+    }
+  }
+]
