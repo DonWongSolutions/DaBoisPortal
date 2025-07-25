@@ -105,34 +105,30 @@ function MainNav({ user }: { user: User }) {
     <SidebarMenu>
       {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.href}>
-            <SidebarMenuButton
-              asChild
-              href={item.href}
-              isActive={pathname.startsWith(item.href) && (item.href === '/dashboard' || item.href === '/wiki' ? pathname.startsWith(item.href) : true)}
-              tooltip={item.label}
-            >
-              <Link href={item.href}>
-                <item.icon className="h-5 w-5" />
-                <span>{item.label}</span>
-              </Link>
-            </SidebarMenuButton>
+            <Link href={item.href} passHref legacyBehavior>
+                <SidebarMenuButton
+                isActive={pathname.startsWith(item.href)}
+                tooltip={item.label}
+                >
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
         )
       )}
 
       {user.role === 'admin' && (
         <SidebarMenuItem>
-            <SidebarMenuButton
-                asChild
-                href="/admin"
-                isActive={pathname.startsWith('/admin')}
-                tooltip="Admin Settings"
-            >
-                <Link href="/admin">
+            <Link href="/admin" passHref legacyBehavior>
+                <SidebarMenuButton
+                    isActive={pathname.startsWith('/admin')}
+                    tooltip="Admin Settings"
+                >
                     <Settings className="h-5 w-5" />
                     <span>Admin Settings</span>
-                </Link>
-            </SidebarMenuButton>
+                </SidebarMenuButton>
+            </Link>
         </SidebarMenuItem>
       )}
     </SidebarMenu>
