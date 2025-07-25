@@ -2,19 +2,33 @@
 import Image from 'next/image';
 import { LoginForm } from '@/components/login-form';
 import { getUsers, getSettings } from '@/lib/data';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Icons } from '@/components/icons';
 
 export default async function LoginPage() {
   const users = await getUsers();
   const settings = await getSettings();
 
   return (
-    <div className="w-full lg:grid lg:grid-cols-2 h-screen">
-      <div className="flex items-center justify-center p-8">
+    <div className="relative min-h-screen w-full lg:grid lg:grid-cols-4">
+      {/* Background Image for Mobile */}
+      <div className="absolute inset-0 lg:hidden">
+         <Image
+          src={settings.loginImageUrl}
+          alt="Background"
+          fill
+          style={{objectFit: "cover"}}
+          className="opacity-50"
+          data-ai-hint="friends group"
+        />
+        <div className="absolute inset-0 bg-background/30"></div>
+      </div>
+      
+      {/* Login Form Section */}
+      <div className="relative flex items-center justify-center p-8 lg:col-span-1">
         <LoginForm users={users} />
       </div>
-      <div className="hidden lg:block relative">
+
+      {/* Image Section for Desktop */}
+      <div className="hidden lg:block lg:col-span-3 relative">
         <Image
           src={settings.loginImageUrl}
           alt="Image"
@@ -22,7 +36,7 @@ export default async function LoginPage() {
           style={{objectFit: "cover"}}
           data-ai-hint="friends group"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/30 via-background/80 to-background"></div>
+        <div className="absolute inset-0 bg-gradient-to-l from-transparent to-background" />
       </div>
     </div>
   );

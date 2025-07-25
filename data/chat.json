@@ -40,5 +40,23 @@
     "author": "Isaac",
     "text": "From Beijing",
     "timestamp": "2025-07-25T06:57:56.452Z"
+  },
+  {
+    "id": 1753426935953,
+    "author": "Don",
+    "text": "Hello Beijin",
+    "timestamp": "2025-07-25T07:02:15.953Z"
+  },
+  {
+    "id": 1753426941738,
+    "author": "Don",
+    "text": "From Hong Kong",
+    "timestamp": "2025-07-25T07:02:21.738Z"
+  },
+  {
+    "id": 1753426945688,
+    "author": "Don",
+    "text": "Welcome",
+    "timestamp": "2025-07-25T07:02:25.688Z"
   }
 ]
