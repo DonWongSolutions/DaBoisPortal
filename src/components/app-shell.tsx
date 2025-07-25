@@ -107,14 +107,11 @@ function MainNav({ user }: { user: User }) {
           <SidebarMenuItem key={item.href}>
             <Link href={item.href}>
                 <SidebarMenuButton
-                asChild
                 isActive={pathname.startsWith(item.href)}
                 tooltip={item.label}
                 >
-                    <div>
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.label}</span>
-                    </div>
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.label}</span>
                 </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -125,14 +122,11 @@ function MainNav({ user }: { user: User }) {
         <SidebarMenuItem>
             <Link href="/admin">
                 <SidebarMenuButton
-                    asChild
                     isActive={pathname.startsWith('/admin')}
                     tooltip="Admin Settings"
                 >
-                    <div>
-                        <Settings className="h-5 w-5" />
-                        <span>Admin Settings</span>
-                    </div>
+                    <Settings className="h-5 w-5" />
+                    <span>Admin Settings</span>
                 </SidebarMenuButton>
             </Link>
         </SidebarMenuItem>
