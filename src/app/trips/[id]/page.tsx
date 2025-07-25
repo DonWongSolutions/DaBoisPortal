@@ -160,7 +160,7 @@ export default function TripDetailsPage() {
                 setTrip(currentTrip);
             } catch (error) {
                 console.error("Failed to fetch data:", error);
-                redirect('/login');
+                // Don't redirect on error, let the page render the error state
             } finally {
                 setLoading(false);
             }
@@ -312,3 +312,5 @@ export default function TripDetailsPage() {
         </AppShell>
     );
 }
+
+    
