@@ -3,8 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { redirect, useParams } from 'next/navigation';
-import { getSession } from '@/lib/auth';
-import { getTrips, getUsers } from '@/lib/data';
+import { getTrips } from '@/lib/data.client';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { addItineraryItemAction, addCostItemAction } from '@/app/actions';
+import { addItineraryItemAction, addCostItemAction, getSessionAction } from '@/app/actions';
 import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle } from 'lucide-react';
 import type { Trip, User } from '@/lib/types';
 import { useFormStatus } from 'react-dom';
@@ -115,7 +114,7 @@ export default function TripDetailsPage() {
 
     useEffect(() => {
         async function fetchData() {
-            const sessionUser = await getSession();
+            const sessionUser = await getSessionAction();
             if (!sessionUser) {
                 redirect('/login');
                 return;
@@ -149,7 +148,7 @@ export default function TripDetailsPage() {
     }
 
     const totalCost = trip.costs.reduce((sum, item) => sum + item.amount, 0);
-    const costPerPerson = totalCost / trip.attendees.length;
+    const costPerPerson = trip.attendees.length > 0 ? totalCost / trip.attendees.length : 0;
 
     return (
         <AppShell user={user}>

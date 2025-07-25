@@ -152,3 +152,7 @@ export async function addCostItemAction(tripId: number, formData: FormData) {
     await saveTrips(trips);
     revalidatePath(`/trips/${tripId}`);
 }
+
+export async function getSessionAction() {
+  return await getSession();
+}

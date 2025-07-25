@@ -2,8 +2,8 @@
 'use client';
 
 import { redirect } from 'next/navigation';
-import { useFormState, useFormStatus } from 'react-dom';
-import { getSession } from '@/lib/auth';
+import { useFormStatus } from 'react-dom';
+import { getSessionAction } from '@/app/actions';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,14 +30,16 @@ export default function NewEventPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getSession().then(sessionUser => {
+        async function fetchSession() {
+            const sessionUser = await getSessionAction();
             if (!sessionUser) {
                 redirect('/login');
             } else {
                 setUser(sessionUser);
                 setLoading(false);
             }
-        });
+        }
+        fetchSession();
     }, []);
 
     if (loading || !user) {

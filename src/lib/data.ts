@@ -20,12 +20,22 @@ async function readJsonFile<T>(filename: string, defaultValue: T): Promise<T> {
     const filePath = path.join(dataPath, filename);
     try {
         const fileContent = await fs.readFile(filePath, 'utf-8');
+        // Handle empty file case
+        if (fileContent.trim() === '') {
+            await writeJsonFile(filename, defaultValue);
+            return defaultValue;
+        }
         return JSON.parse(fileContent);
     } catch (error: any) {
         if (error.code === 'ENOENT') {
             // If file doesn't exist, create it with default value
             await writeJsonFile(filename, defaultValue);
             return defaultValue;
+        }
+        // If there's a parsing error with an existing file, it might be corrupt or empty
+        if (error instanceof SyntaxError) {
+             await writeJsonFile(filename, defaultValue);
+             return defaultValue;
         }
         throw error;
     }
@@ -39,8 +49,49 @@ async function writeJsonFile<T>(filename: string, data: T): Promise<void> {
 
 
 export async function getUsers(): Promise<User[]> {
-  const fileContent = await fs.readFile(path.join(dataPath, 'users.json'), 'utf-8');
-  return JSON.parse(fileContent);
+    const defaultUsers: User[] = [
+      {
+        "id": 1,
+        "name": "Don",
+        "password": "Frank",
+        "role": "admin",
+        "age": 28,
+        "birthday": "1996-05-10",
+        "phone": "123-456-7890",
+        "email": "don@dabois.com"
+      },
+      {
+        "id": 2,
+        "name": "Isaac",
+        "password": "Ballsac",
+        "role": "member",
+        "age": 27,
+        "birthday": "1997-08-15",
+        "phone": "234-567-8901",
+        "email": "isaac@dabois.com"
+      },
+      {
+        "id": 3,
+        "name": "Xavier",
+        "password": "Egg",
+        "role": "member",
+        "age": 28,
+        "birthday": "1996-03-22",
+        "phone": "345-678-9012",
+        "email": "xavier@dabois.com"
+      },
+      {
+        "id": 4,
+        "name": "Nathan",
+        "password": "Eczema",
+        "role": "member",
+        "age": 26,
+        "birthday": "1998-11-30",
+        "phone": "456-789-0123",
+        "email": "nathan@dabois.com"
+      }
+    ];
+    return readJsonFile<User[]>('users.json', defaultUsers);
 }
 
 export async function getEvents(): Promise<Event[]> {

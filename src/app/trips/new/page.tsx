@@ -3,8 +3,8 @@
 
 import { redirect } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { getSession } from '@/lib/auth';
-import { getUsers } from '@/lib/data';
+import { getSessionAction } from '@/app/actions';
+import { getUsers } from '@/lib/data.client';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +32,7 @@ export default function NewTripPage() {
 
     useEffect(() => {
         async function fetchData() {
-            const sessionUser = await getSession();
+            const sessionUser = await getSessionAction();
             if (!sessionUser) {
                 redirect('/login');
             } else {

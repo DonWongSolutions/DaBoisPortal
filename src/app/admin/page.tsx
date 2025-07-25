@@ -3,8 +3,7 @@
 
 import { useEffect, useState, useActionState } from 'react';
 import { redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth';
-import { getSettings } from '@/lib/data';
+import { getSettings } from '@/lib/data.client';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,12 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { updateSettingsAction } from '@/app/actions';
+import { updateSettingsAction, getSessionAction } from '@/app/actions';
 import type { User, AppSettings } from '@/lib/types';
 
 function SettingsForm({ settings }: { settings: AppSettings }) {
     const { toast } = useToast();
-    const [currentSettings, setCurrentSettings] = useState(settings);
     
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         const newSettings = {
@@ -58,15 +56,15 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
                                 Temporarily disable access to the portal for non-admins.
                             </p>
                         </div>
-                        <Switch id="maintenance-mode" name="maintenanceMode" defaultChecked={currentSettings.maintenanceMode} />
+                        <Switch id="maintenance-mode" name="maintenanceMode" defaultChecked={settings.maintenanceMode} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="loginImageUrl">Login Page Image URL</Label>
-                        <Input id="loginImageUrl" name="loginImageUrl" defaultValue={currentSettings.loginImageUrl} />
+                        <Input id="loginImageUrl" name="loginImageUrl" defaultValue={settings.loginImageUrl} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="dashboardBannerUrl">Dashboard Banner Image URL</Label>
-                        <Input id="dashboardBannerUrl" name="dashboardBannerUrl" defaultValue={currentSettings.dashboardBannerUrl} />
+                        <Input id="dashboardBannerUrl" name="dashboardBannerUrl" defaultValue={settings.dashboardBannerUrl} />
                     </div>
                 </CardContent>
                 <CardFooter>
@@ -85,7 +83,7 @@ export default function AdminPage() {
 
     useEffect(() => {
         async function fetchData() {
-            const sessionUser = await getSession();
+            const sessionUser = await getSessionAction();
             if (!sessionUser || sessionUser.role !== 'admin') {
                 redirect('/dashboard');
                 return;

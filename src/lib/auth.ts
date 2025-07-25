@@ -1,10 +1,12 @@
-
-import 'server-only';
 import { cookies } from 'next/headers';
 import type { User } from './types';
-import { getUsers } from './data';
+import { getUsers as readUsers } from './data';
 
 const SESSION_COOKIE_NAME = 'da_bois_session';
+
+// This function is marked as 'server-only' implicitly by using `cookies()`
+// but we are being explicit here.
+import 'server-only';
 
 export async function setSession(username: string) {
   cookies().set(SESSION_COOKIE_NAME, username, {
@@ -21,7 +23,7 @@ export async function getSession(): Promise<User | null> {
     return null;
   }
 
-  const users = await getUsers();
+  const users = await readUsers();
   const user = users.find((u) => u.name === username);
 
   if (!user) {
