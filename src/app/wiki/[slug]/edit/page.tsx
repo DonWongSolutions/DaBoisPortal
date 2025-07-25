@@ -94,15 +94,15 @@ export default function WikiEditSlugPage() {
 
     useEffect(() => {
         async function fetchData() {
-            try {
-                const sessionUser = await getSessionAction();
-                const editableRoles: Array<User['role']> = ['admin', 'member'];
-                if (!sessionUser || !editableRoles.includes(sessionUser.role) || sessionUser.name === 'Parents') {
-                    redirect('/wiki');
-                    return;
-                }
-                setUser(sessionUser);
+            const sessionUser = await getSessionAction();
+            const editableRoles: Array<User['role']> = ['admin', 'member'];
+            if (!sessionUser || !editableRoles.includes(sessionUser.role) || sessionUser.name === 'Parents') {
+                redirect('/wiki');
+                return;
+            }
+            setUser(sessionUser);
 
+            try {
                 const wikiData = await getWikiContent();
                 const currentWikiPage = wikiData.find(p => p.slug === slug);
                 if (currentWikiPage) {
@@ -113,13 +113,18 @@ export default function WikiEditSlugPage() {
                 }
             } catch (error) {
                 console.error("Failed to fetch data:", error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: 'Failed to load wiki content.',
+                });
                 redirect('/dashboard');
             } finally {
                 setLoading(false);
             }
         }
         fetchData();
-    }, [slug, editor]);
+    }, [slug, toast, router]);
 
     if (loading || !editor || !page || !user) {
         return <div>Loading Editor...</div>;
