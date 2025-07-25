@@ -7,7 +7,18 @@
     "endDate": "2026-07-30",
     "createdBy": "Don",
     "attendees": [],
-    "itinerary": [],
+    "itinerary": [
+      {
+        "day": "2025-07-26",
+        "activities": [
+          {
+            "startTime": "14:38",
+            "endTime": "19:06",
+            "description": "Test"
+          }
+        ]
+      }
+    ],
     "costs": []
   }
 ]

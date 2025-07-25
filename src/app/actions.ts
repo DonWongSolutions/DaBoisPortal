@@ -292,16 +292,30 @@ export async function createTripAction(formData: FormData) {
 export async function addItineraryItemAction(tripId: number, formData: FormData) {
     const sessionUser = await getSession();
     if (!sessionUser || sessionUser.role === 'parent') {
-       return;
+       return { success: false, message: 'Unauthorized.' };
     }
     const trips = await getTrips();
     const trip = trips.find(t => t.id === tripId);
 
     if (!trip) {
-        return;
+        return { success: false, message: 'Trip not found.' };
     }
 
     const day = formData.get('day') as string;
+    
+    // Validation
+    const dayDate = new Date(day);
+    const startDate = new Date(trip.startDate);
+    const endDate = new Date(trip.endDate);
+    
+    // Set hours to 0 to compare dates only
+    dayDate.setUTCHours(0,0,0,0);
+    startDate.setUTCHours(0,0,0,0);
+    endDate.setUTCHours(0,0,0,0);
+
+    if (dayDate < startDate || dayDate > endDate) {
+        return { success: false, message: 'Itinerary date must be within the trip date range.' };
+    }
     
     const newActivity = {
         startTime: formData.get('startTime') as string,
@@ -322,6 +336,7 @@ export async function addItineraryItemAction(tripId: number, formData: FormData)
 
     await saveTrips(trips);
     revalidatePath(`/trips/${tripId}`);
+    return { success: true, message: 'Itinerary item added.' };
 }
 
 export async function addCostItemAction(tripId: number, formData: FormData) {

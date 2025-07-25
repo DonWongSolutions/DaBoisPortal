@@ -39,6 +39,7 @@ import {
   MessageSquare,
   User as UserIcon,
 } from 'lucide-react';
+import { ThemeToggle } from './theme-toggle';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, allowedRoles: ['admin', 'member', 'parent'] },
@@ -152,6 +153,7 @@ export function AppShell({
               <SidebarTrigger />
             </div>
             <div className="w-full flex-1" />
+            <ThemeToggle />
             <UserMenu user={user} />
           </header>
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 overflow-auto">

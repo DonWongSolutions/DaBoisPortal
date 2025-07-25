@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useActionState } from 'react';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,17 +17,33 @@ import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send
 import type { Trip, User, ItineraryActivity } from '@/lib/types';
 import { useFormStatus } from 'react-dom';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 function AddItineraryForm({ trip }: { trip: Trip }) {
-    const { pending } = useFormStatus();
-    const addItineraryItemWithTripId = addItineraryItemAction.bind(null, trip.id);
+    const { toast } = useToast();
     const formRef = useRef<HTMLFormElement>(null);
+    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const result = await addItineraryItemAction(trip.id, formData);
+        if (result.success) {
+            toast({
+                title: "Success",
+                description: result.message,
+            });
+            formRef.current?.reset();
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.message,
+            });
+        }
+        return result;
+    }, { success: false, message: ''});
+    
+    const { pending } = useFormStatus();
 
     return (
-        <form ref={formRef} action={async (formData) => {
-            await addItineraryItemWithTripId(formData);
-            formRef.current?.reset();
-        }}>
+        <form ref={formRef} action={formAction}>
             <Card>
                 <CardHeader>
                     <CardTitle>Add Itinerary Item</CardTitle>
