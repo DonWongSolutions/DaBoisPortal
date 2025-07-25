@@ -1,9 +1,20 @@
-
 [
   {
     "id": 1753424036979,
     "author": "Don",
     "text": "Welcome to the secure chat!",
     "timestamp": "2025-07-25T02:13:56.979Z"
+  },
+  {
+    "id": 1753412767094,
+    "author": "Isaac",
+    "text": "hey",
+    "timestamp": "2025-07-25T03:06:07.094Z"
+  },
+  {
+    "id": 1753412770753,
+    "author": "Isaac",
+    "text": "good morning",
+    "timestamp": "2025-07-25T03:06:10.753Z"
   }
 ]

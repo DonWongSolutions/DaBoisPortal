@@ -135,7 +135,7 @@ export function AppShell({
           </SidebarContent>
           <SidebarFooter />
         </Sidebar>
-        <div className="flex-1 flex flex-col">
+        <div className="flex flex-col flex-1 w-0">
           <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
             <div className="md:hidden">
               <SidebarTrigger />
