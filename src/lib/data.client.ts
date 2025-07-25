@@ -1,4 +1,5 @@
 
+
 'use client';
 
 // This file contains client-safe versions of data-fetching functions.
@@ -39,8 +40,6 @@ export async function getSettings(): Promise<AppSettings> {
 }
 
 export async function getWikiContent(): Promise<WikiContent> {
-    const defaultContent: WikiContent = {
-        content: "<p>Loading content...</p>"
-    };
+    const defaultContent: WikiContent = [];
     return defaultContent;
 }

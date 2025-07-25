@@ -1,4 +1,5 @@
 
+
 import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
@@ -143,9 +144,11 @@ export async function saveChatMessages(messages: ChatMessage[]): Promise<void> {
 }
 
 export async function getWikiContent(): Promise<WikiContent> {
-    const defaultContent: WikiContent = {
+    const defaultContent: WikiContent = [{
+        slug: "welcome",
+        title: "Welcome to the Wiki!",
         content: "<h1>Welcome to the Wiki!</h1><p>This is a publicly accessible wiki page. Only members can edit this page.</p>"
-    };
+    }];
     return readJsonFile<WikiContent>('wiki.json', defaultContent);
 }
 

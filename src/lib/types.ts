@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: number;
   name: 'Don' | 'Isaac' | 'Xavier' | 'Nathan' | 'Parents';
@@ -75,6 +76,10 @@ export interface ChatMessage {
   timestamp: string;
 }
 
-export interface WikiContent {
+export interface WikiPage {
+  slug: string;
+  title: string;
   content: string;
 }
+
+export type WikiContent = WikiPage[];

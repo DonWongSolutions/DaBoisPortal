@@ -1,8 +1,9 @@
 
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin', '/wiki/edit'];
+const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin', '/wiki/edit', '/wiki/new'];
 const authRoutes = ['/login'];
 const publicRoutes = ['/wiki'];
 
@@ -10,8 +11,8 @@ export function middleware(request: NextRequest) {
   const session = request.cookies.get('da_bois_session')?.value;
   const { pathname } = request.nextUrl;
 
-  // Allow access to public routes
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route) && (pathname === route || pathname.startsWith(route + '/')));
+  if (isPublicRoute && !pathname.includes('/edit') && !pathname.includes('/new')) {
     return NextResponse.next();
   }
 

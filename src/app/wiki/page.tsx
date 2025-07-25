@@ -1,45 +1,71 @@
 
+
 import { getWikiContent } from '@/lib/data';
+import { getSession } from '@/lib/auth';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent } from '@/components/ui/card';
-import { Icons } from '@/components/icons';
-import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { AppShell } from '@/components/app-shell';
+import { FilePenLine } from 'lucide-react';
 
-export default async function WikiPage() {
-    const { content } = await getWikiContent();
+export default async function WikiDirectoryPage() {
+    const user = await getSession();
+    const pages = await getWikiContent();
 
+    const pageContent = (
+        <>
+            <PageHeader 
+                title="Wiki"
+                description="A collaborative space for important information."
+            >
+                {user && (user.role === 'admin' || user.role === 'member') && (
+                    <Button asChild>
+                        <Link href="/wiki/new">
+                            <FilePenLine className="mr-2 h-4 w-4" />
+                            New Page
+                        </Link>
+                    </Button>
+                )}
+            </PageHeader>
+            <Card>
+                <CardHeader>
+                    <CardTitle>All Pages</CardTitle>
+                    <CardDescription>Browse the available wiki pages.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {pages.map(page => (
+                            <Link href={`/wiki/${page.slug}`} key={page.slug} legacyBehavior>
+                                <a className="block p-4 border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors">
+                                    <h3 className="font-semibold">{page.title}</h3>
+                                </a>
+                            </Link>
+                        ))}
+                        {pages.length === 0 && (
+                            <p className="text-muted-foreground">No wiki pages have been created yet.</p>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+        </>
+    );
+
+    if (user) {
+        return (
+            <AppShell user={user}>
+                {pageContent}
+            </AppShell>
+        );
+    }
+    
+    // Fallback for non-logged in users if needed, though middleware should handle it.
+    // For now, let's assume this page is inside the app shell for logged-in users.
     return (
-        <div className="bg-background text-foreground min-h-screen">
-            <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-                <div className="flex items-center gap-2">
-                    <Icons.Logo className="h-6 w-6 text-primary" />
-                    <span className="text-lg font-semibold">
-                        Da Bois Wiki
-                    </span>
-                </div>
-                <div className="flex-1" />
-                <Button asChild variant="outline">
-                    <Link href="/login">Portal Login</Link>
-                </Button>
-            </header>
-            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-                 <PageHeader 
-                    title="Public Wiki"
-                    description="A collaborative space for important information, editable by members."
-                 />
-                 <Card>
-                    <CardContent className="p-6">
-                        <div 
-                            className="prose dark:prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: content }}
-                        />
-                    </CardContent>
-                 </Card>
-            </main>
-             <footer className="p-4 text-center text-sm text-muted-foreground border-t">
-                Copyright Da Bois 2025. All Rights Reserved. Developed by Don Wong.
-            </footer>
+        <div className="p-8">
+             <div className="max-w-4xl mx-auto">
+                {pageContent}
+             </div>
         </div>
     );
 }
