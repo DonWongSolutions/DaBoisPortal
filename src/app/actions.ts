@@ -73,12 +73,11 @@ export async function updateUserAction(formData: FormData) {
         updatedUser.age = calculateAge(birthday);
     }
 
-    if (formData.has('profilePictureUrl')) {
-        const profilePicUrl = formData.get('profilePictureUrl') as string;
-        if(profilePicUrl) {
-           updatedUser.profilePictureUrl = profilePicUrl;
-        }
+    const profilePicUrl = formData.get('profilePictureUrl') as string | null;
+    if (profilePicUrl) {
+        updatedUser.profilePictureUrl = profilePicUrl;
     }
+
 
     if (newPassword) {
         updatedUser.password = newPassword;
@@ -515,8 +514,7 @@ export async function saveWikiPageAction(slug: string, formData: FormData) {
         wikiPages[pageIndex].content = content;
 
         await saveWikiContent(wikiPages);
-        revalidatePath(`/wiki/${slug}`);
-        revalidatePath(`/wiki/${slug}/edit`);
+        revalidatePath(`/wiki`, 'layout');
         return { success: true, message: 'Wiki page saved successfully.' };
     } catch(e) {
         return { success: false, message: 'Failed to save wiki content.' };
@@ -559,9 +557,9 @@ export async function createWikiPageAction(formData: FormData) {
         wikiPages.push(newPage);
         await saveWikiContent(wikiPages);
         
-        revalidatePath('/wiki');
+        revalidatePath(`/wiki`, 'layout');
+        return { success: true, slug: slug };
     } catch(e) {
         return { success: false, message: 'Failed to create wiki page.' };
     }
-    redirect(`/wiki`);
 }

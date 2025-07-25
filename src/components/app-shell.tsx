@@ -40,11 +40,9 @@ import {
   ChevronDown,
   MessageSquare,
   User as UserIcon,
-  BookMarked,
-  FilePenLine,
+  BookOpen,
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, allowedRoles: ['admin', 'member', 'parent'] },
@@ -52,11 +50,7 @@ const navItems = [
   { href: '/schedule', label: 'Schedule', icon: CalendarCheck, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/trips', label: 'Trip Planner', icon: Plane, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/chat', label: 'Chat', icon: MessageSquare, allowedRoles: ['admin', 'member'] },
-];
-
-const wikiNavItems = [
-    { href: '/wiki', label: 'View All Pages', icon: BookMarked, allowedRoles: ['admin', 'member'] },
-    { href: '/wiki/new', label: 'New Page', icon: FilePenLine, allowedRoles: ['admin', 'member'] },
+  { href: '/wiki', label: 'Wiki', icon: BookOpen, allowedRoles: ['admin', 'member', 'parent'] },
 ];
 
 function UserMenu({ user }: { user: User }) {
@@ -108,7 +102,6 @@ function MainNav({ user }: { user: User }) {
   const pathname = usePathname();
   
   const filteredNavItems = navItems.filter(item => user && item.allowedRoles.includes(user.role));
-  const canSeeWiki = user.role === 'admin' || user.role === 'member';
 
   return (
     <SidebarMenu>
@@ -117,7 +110,7 @@ function MainNav({ user }: { user: User }) {
             <SidebarMenuButton
               asChild
               href={item.href}
-              isActive={pathname === item.href}
+              isActive={pathname.startsWith(item.href)}
               tooltip={item.label}
             >
               <Link href={item.href}>
@@ -128,56 +121,6 @@ function MainNav({ user }: { user: User }) {
           </SidebarMenuItem>
         )
       )}
-      {canSeeWiki && (
-          <Collapsible>
-                <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                        <SidebarMenuButton
-                            isSubmenu
-                            isActive={pathname.startsWith('/wiki')}
-                            tooltip="Wiki"
-                            >
-                            <BookMarked className="h-5 w-5" />
-                            <span>Wiki</span>
-                        </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                </SidebarMenuItem>
-                <CollapsibleContent asChild>
-                    <SidebarMenuSub>
-                        {wikiNavItems.map((item) => (
-                           <SidebarMenuItem key={item.href}>
-                             <SidebarMenuButton
-                                asChild
-                                href={item.href}
-                                isActive={pathname === item.href}
-                                tooltip={item.label}
-                                className="h-8"
-                              >
-                                <Link href={item.href}>
-                                  <item.icon className="h-4 w-4" />
-                                  <span>{item.label}</span>
-                                </Link>
-                              </SidebarMenuButton>
-                           </SidebarMenuItem>
-                        ))}
-                    </SidebarMenuSub>
-                </CollapsibleContent>
-          </Collapsible>
-      )}
-
-       <SidebarMenuItem>
-            <SidebarMenuButton
-                asChild
-                href="/profile"
-                isActive={pathname.startsWith('/profile')}
-                tooltip="Profile"
-            >
-                <Link href="/profile">
-                    <UserIcon className="h-5 w-5" />
-                    <span>Profile</span>
-                </Link>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
 
       {user.role === 'admin' && (
         <SidebarMenuItem>

@@ -1,10 +1,9 @@
 
 'use client';
 
-import { redirect } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { useFormStatus, useActionState } from 'react-dom';
 import { getSessionAction, createWikiPageAction } from '@/app/actions';
-import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -27,6 +26,7 @@ export default function NewWikiPage() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const router = useRouter();
     
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         const result = await createWikiPageAction(formData);
@@ -36,6 +36,8 @@ export default function NewWikiPage() {
                 title: "Error",
                 description: result.message,
             });
+        } else if (result?.success === true && result.slug) {
+            router.push(`/wiki/${result.slug}/edit`);
         }
         return result;
     }, { success: true, message: ''});
@@ -70,12 +72,12 @@ export default function NewWikiPage() {
     }
   
     return (
-        <AppShell user={user}>
+        <>
             <PageHeader
                 title="Create New Wiki Page"
                 description="Create a new page for the public wiki."
             />
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-2xl">
                 <form action={formAction}>
                     <Card>
                         <CardHeader>
@@ -98,7 +100,7 @@ export default function NewWikiPage() {
                     </Card>
                 </form>
             </div>
-        </AppShell>
+        </>
     );
 }
 

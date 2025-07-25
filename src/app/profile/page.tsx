@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { User } from '@/lib/types';
 import { format } from 'date-fns';
 
@@ -45,11 +45,32 @@ function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: 
         }
         return result;
     }, { success: false, message: ''});
+    
+    const handleImageUpdate = async (formData: FormData) => {
+        const result = await updateUserAction(formData);
+         if (result.success) {
+            toast({
+                title: "Success",
+                description: result.message,
+            });
+            const updatedUser = await getSessionAction();
+            if (updatedUser) {
+                onUserUpdate(updatedUser);
+            }
+            setOpenDialog(false);
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.message,
+            });
+        }
+    }
 
 
     return (
-        <form action={formAction} ref={formRef}>
-            <Card>
+        <Card>
+            <form action={formAction}>
                 <CardHeader>
                     <CardTitle>Edit Your Profile</CardTitle>
                     <CardDescription>Update your personal information.</CardDescription>
@@ -62,22 +83,24 @@ function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: 
                         </Avatar>
                         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                             <DialogTrigger asChild>
-                                <Button variant="outline">Change Picture</Button>
+                                <Button type="button" variant="outline">Change Picture</Button>
                             </DialogTrigger>
                             <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Change Profile Picture</DialogTitle>
-                                    <DialogDescription>
-                                        To change your profile picture, please upload an image to <a href="https://upload.cc/" target="_blank" rel="noopener noreferrer" className="underline">upload.cc</a>, then paste the full image URL below.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-2">
-                                    <Label htmlFor="profilePictureUrl">Image URL</Label>
-                                    <Input id="profilePictureUrl" name="profilePictureUrl" defaultValue={user.profilePictureUrl} />
-                                </div>
-                                <DialogFooter>
-                                    <Button type="submit">Save</Button>
-                                </DialogFooter>
+                                <form action={handleImageUpdate}>
+                                    <DialogHeader>
+                                        <DialogTitle>Change Profile Picture</DialogTitle>
+                                        <DialogDescription>
+                                            To change your profile picture, please upload an image to <a href="https://upload.cc/" target="_blank" rel="noopener noreferrer" className="underline">upload.cc</a>, then paste the full image URL below.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-2 py-4">
+                                        <Label htmlFor="profilePictureUrl">Image URL</Label>
+                                        <Input id="profilePictureUrl" name="profilePictureUrl" defaultValue={user.profilePictureUrl} />
+                                    </div>
+                                    <DialogFooter>
+                                        <Button type="submit">Save</Button>
+                                    </DialogFooter>
+                                </form>
                             </DialogContent>
                         </Dialog>
                     </div>
@@ -112,8 +135,8 @@ function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: 
                 <CardFooter>
                     <Button type="submit">Save Changes</Button>
                 </CardFooter>
-            </Card>
-        </form>
+            </form>
+        </Card>
     );
 }
 
@@ -142,6 +165,10 @@ export default function ProfilePage() {
         fetchUser();
     }, []);
 
+    const handleUserUpdate = (updatedUser: User) => {
+        setUser(updatedUser);
+    }
+
     if (loading) {
         return <div>Loading...</div>;
     }
@@ -157,7 +184,7 @@ export default function ProfilePage() {
                 description="Manage your account details."
             />
             <div className="max-w-2xl mx-auto">
-                <ProfileForm user={user} onUserUpdate={setUser} />
+                <ProfileForm user={user} onUserUpdate={handleUserUpdate} />
             </div>
         </AppShell>
     );

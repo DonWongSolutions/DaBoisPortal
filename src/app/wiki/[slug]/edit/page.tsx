@@ -9,17 +9,15 @@ import Image from '@tiptap/extension-image';
 import { getSessionAction, saveWikiPageAction } from '@/app/actions';
 import { getWikiContent } from '@/lib/data.client';
 import type { User, WikiPage } from '@/lib/types';
-import { AppShell } from '@/components/app-shell';
-import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Bold, Italic, Strikethrough, List, ListOrdered, Heading1, Heading2, Heading3, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState, useActionState } from 'react';
+import { PageHeader } from '@/components/page-header';
 
 const MenuBar = ({ editor }: { editor: Editor | null }) => {
     if (!editor) {
@@ -121,7 +119,7 @@ export default function WikiEditSlugPage() {
             }
         }
         fetchData();
-    }, [slug]);
+    }, [slug, editor]);
 
     if (loading || !editor || !page) {
         return <div>Loading Editor...</div>;
@@ -132,70 +130,31 @@ export default function WikiEditSlugPage() {
     }
 
     return (
-        <AppShell user={user}>
-            <form action={formAction}>
-                 <PageHeader 
-                    title={`Editing: ${page.title}`}
-                    description="Use the editor below to make changes."
-                >
-                    <div className="flex gap-2">
-                        <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
-                        <Button type="submit">Save Changes</Button>
-                    </div>
-                </PageHeader>
-                <div className="grid md:grid-cols-3 gap-8">
-                    <div className="md:col-span-2">
-                        <Card>
-                             <CardContent className="p-4 space-y-4">
-                                <div>
-                                    <Label htmlFor="title">Page Title</Label>
-                                    <Input id="title" name="title" defaultValue={page.title} required />
-                                </div>
-                                <div>
-                                    <Label>Page Content</Label>
-                                    <div className="border rounded-md p-2">
-                                        <MenuBar editor={editor} />
-                                        <EditorContent editor={editor} />
-                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                    <div className="md:col-span-1">
-                         <Card>
-                            <CardHeader>
-                                <CardTitle>Formatting Help</CardTitle>
-                                <CardDescription>Use markdown shortcuts for quick formatting.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                 <Accordion type="single" collapsible className="w-full">
-                                    <AccordionItem value="item-1">
-                                        <AccordionTrigger>Headings</AccordionTrigger>
-                                        <AccordionContent>
-                                            <code># H1</code>, <code>## H2</code>, <code>### H3</code>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                    <AccordionItem value="item-2">
-                                        <AccordionTrigger>Text Styles</AccordionTrigger>
-                                        <AccordionContent>
-                                            <code>**Bold**</code> or <code>__Bold__</code><br/>
-                                            <code>*Italic*</code> or <code>_Italic_</code><br/>
-                                            <code>~~Strike~~</code>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                    <AccordionItem value="item-3">
-                                        <AccordionTrigger>Lists</AccordionTrigger>
-                                        <AccordionContent>
-                                            Unordered: <code>* </code>, <code>- </code>, or <code>+ </code><br/>
-                                            Ordered: <code>1. </code>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                </Accordion>
-                            </CardContent>
-                         </Card>
-                    </div>
+        <form action={formAction}>
+            <PageHeader 
+                title={`Editing: ${page.title}`}
+                description="Use the editor below to make changes."
+            >
+                <div className="flex gap-2">
+                    <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
+                    <Button type="submit">Save Changes</Button>
                 </div>
-            </form>
-        </AppShell>
+            </PageHeader>
+            <Card>
+                <CardContent className="p-4 space-y-4">
+                    <div>
+                        <Label htmlFor="title">Page Title</Label>
+                        <Input id="title" name="title" defaultValue={page.title} required />
+                    </div>
+                    <div>
+                        <Label>Page Content</Label>
+                        <div className="border rounded-md p-2">
+                            <MenuBar editor={editor} />
+                            <EditorContent editor={editor} />
+                            </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </form>
     )
 }

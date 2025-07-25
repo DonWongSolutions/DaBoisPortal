@@ -6,20 +6,20 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { AppShell } from '@/components/app-shell';
 import { FilePenLine } from 'lucide-react';
 
 export default async function WikiDirectoryPage() {
     const user = await getSession();
     const pages = await getWikiContent();
+    const canEdit = user && (user.role === 'admin' || user.role === 'member');
 
-    const pageContent = (
+    return (
         <>
             <PageHeader 
                 title="Wiki"
                 description="A collaborative space for important information."
             >
-                {user && (user.role === 'admin' || user.role === 'member') && (
+                {canEdit && (
                     <Button asChild>
                         <Link href="/wiki/new">
                             <FilePenLine className="mr-2 h-4 w-4" />
@@ -49,23 +49,5 @@ export default async function WikiDirectoryPage() {
                 </CardContent>
             </Card>
         </>
-    );
-
-    if (user) {
-        return (
-            <AppShell user={user}>
-                {pageContent}
-            </AppShell>
-        );
-    }
-    
-    // Fallback for non-logged in users if needed, though middleware should handle it.
-    // For now, let's assume this page is inside the app shell for logged-in users.
-    return (
-        <div className="p-8">
-             <div className="max-w-4xl mx-auto">
-                {pageContent}
-             </div>
-        </div>
     );
 }
