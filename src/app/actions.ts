@@ -51,7 +51,7 @@ export async function updateSettingsAction(settings: AppSettings) {
 
 export async function createEventAction(formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser || sessionUser.role === 'parent') {
+    if (!sessionUser || sessionUser.role !== 'admin') {
         redirect('/login');
     }
 
@@ -158,7 +158,7 @@ export async function addEventSuggestionAction(eventId: number, formData: FormDa
 
 export async function importCalendarAction(formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser || sessionUser.role === 'parent') {
+    if (!sessionUser || sessionUser.role !== 'admin') {
         redirect('/login');
     }
 
@@ -247,7 +247,8 @@ export async function addItineraryItemAction(tripId: number, formData: FormData)
     const day = formData.get('day') as string;
     
     const newActivity = {
-        time: formData.get('time') as string,
+        startTime: formData.get('startTime') as string,
+        endTime: formData.get('endTime') as string,
         description: formData.get('description') as string,
     };
 
@@ -255,7 +256,7 @@ export async function addItineraryItemAction(tripId: number, formData: FormData)
 
     if (dayItinerary) {
         dayItinerary.activities.push(newActivity);
-        dayItinerary.activities.sort((a, b) => a.time.localeCompare(b.time));
+        dayItinerary.activities.sort((a, b) => a.startTime.localeCompare(b.startTime));
     } else {
         dayItinerary = { day, activities: [newActivity] };
         trip.itinerary.push(dayItinerary);

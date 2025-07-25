@@ -29,7 +29,8 @@ export interface Event {
 }
 
 export interface ItineraryActivity {
-  time: string;
+  startTime: string;
+  endTime: string;
   description: string;
 }
 
