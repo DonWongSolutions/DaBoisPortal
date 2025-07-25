@@ -138,10 +138,8 @@ export function AppShell({
           <SidebarFooter />
         </Sidebar>
         <div className="flex-1 flex flex-col w-0">
-          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background/80 backdrop-blur-sm px-4">
-            <div className="md:hidden">
-              <SidebarTrigger />
-            </div>
+          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+            <SidebarTrigger className="md:hidden" />
             <div className="flex-1" />
             <UserMenu user={user} />
           </header>
