@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         hostname: 'roboconoxon.org.uk',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'upload.cc',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
