@@ -120,8 +120,8 @@ export function AppShell({
 }) {
   return (
     <SidebarProvider defaultOpen>
-       <div className="flex min-h-screen">
-        <Sidebar collapsible="icon" side="left">
+       <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+        <Sidebar collapsible="icon" side="left" className="hidden md:block">
           <SidebarHeader>
             <div className="flex items-center gap-2 p-2">
               <Icons.Logo className="h-8 w-8 text-primary" />
@@ -135,15 +135,15 @@ export function AppShell({
           </SidebarContent>
           <SidebarFooter />
         </Sidebar>
-        <div className="flex flex-col flex-1 min-w-0">
-          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+        <div className="flex flex-col">
+          <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
             <div className="md:hidden">
               <SidebarTrigger />
             </div>
-            <div className="flex-1" />
+            <div className="w-full flex-1" />
             <UserMenu user={user} />
           </header>
-          <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 overflow-y-auto">
             {children}
           </main>
           <footer className="p-4 text-center text-sm text-muted-foreground border-t">
