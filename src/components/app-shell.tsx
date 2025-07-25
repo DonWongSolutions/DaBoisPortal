@@ -43,6 +43,8 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, allowedRoles: ['admin', 'member', 'parent'] },
@@ -50,7 +52,6 @@ const navItems = [
   { href: '/schedule', label: 'Schedule', icon: CalendarCheck, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/trips', label: 'Trip Planner', icon: Plane, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/chat', label: 'Chat', icon: MessageSquare, allowedRoles: ['admin', 'member'] },
-  { href: '/wiki', label: 'Wiki', icon: BookOpen, allowedRoles: ['admin', 'member', 'parent'] },
 ];
 
 function UserMenu({ user }: { user: User }) {
@@ -110,7 +111,7 @@ function MainNav({ user }: { user: User }) {
             <SidebarMenuButton
               asChild
               href={item.href}
-              isActive={pathname.startsWith(item.href)}
+              isActive={pathname.startsWith(item.href) && (item.href === '/dashboard' ? pathname === item.href : true)}
               tooltip={item.label}
             >
               <Link href={item.href}>
@@ -121,6 +122,34 @@ function MainNav({ user }: { user: User }) {
           </SidebarMenuItem>
         )
       )}
+
+      <Collapsible>
+        <SidebarMenuItem>
+            <CollapsibleTrigger asChild>
+                <SidebarMenuButton isSubmenu isActive={pathname.startsWith('/wiki')}>
+                    <BookOpen className="h-5 w-5" />
+                    <span>Wiki</span>
+                </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+                <SidebarMenuSub>
+                    <SidebarMenuSubItem>
+                        <SidebarMenuSubButton href="/wiki" isActive={pathname === '/wiki'}>
+                            View All Pages
+                        </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    {user.role !== 'parent' && (
+                    <SidebarMenuSubItem>
+                        <SidebarMenuSubButton href="/wiki/new" isActive={pathname === '/wiki/new'}>
+                           New Page
+                        </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    )}
+                </SidebarMenuSub>
+            </CollapsibleContent>
+        </SidebarMenuItem>
+      </Collapsible>
+
 
       {user.role === 'admin' && (
         <SidebarMenuItem>
