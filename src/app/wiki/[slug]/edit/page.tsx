@@ -5,8 +5,8 @@ import { redirect, useParams, useRouter } from 'next/navigation';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import { getSessionAction, saveWikiPageAction } from '@/app/actions';
-import { getWikiContent } from '@/lib/data.client';
+import { getSessionAction, saveWikiPageAction, createWikiPageAction } from '@/app/actions';
+import { getWikiContent as getWikiContentClient } from '@/lib/data.client';
 import type { User, WikiPage } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -103,12 +103,17 @@ export default function WikiEditSlugPage() {
             setUser(sessionUser);
 
             try {
-                const wikiData = await getWikiContent();
+                const wikiData = await getWikiContentClient();
                 const currentWikiPage = wikiData.find(p => p.slug === slug);
                 if (currentWikiPage) {
                     setPage(currentWikiPage);
                     setInitialContent(currentWikiPage.content);
                 } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Error',
+                        description: 'Failed to load wiki page content.',
+                    });
                     redirect('/wiki');
                 }
             } catch (error) {
@@ -118,7 +123,7 @@ export default function WikiEditSlugPage() {
                     title: 'Error',
                     description: 'Failed to load wiki content.',
                 });
-                redirect('/dashboard');
+                redirect('/wiki');
             } finally {
                 setLoading(false);
             }

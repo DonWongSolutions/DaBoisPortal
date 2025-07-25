@@ -81,5 +81,3 @@ export interface WikiPage {
   title: string;
   content: string;
 }
-
-export type WikiContent = WikiPage[];
