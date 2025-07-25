@@ -3,7 +3,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin', '/wiki/edit', '/wiki/new'];
+const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin'];
+const memberOnlyRoutes = ['/profile', '/wiki/new', '/wiki/edit'];
 const authRoutes = ['/login'];
 const publicRoutes = ['/wiki'];
 
@@ -11,13 +12,15 @@ export function middleware(request: NextRequest) {
   const session = request.cookies.get('da_bois_session')?.value;
   const { pathname } = request.nextUrl;
 
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route) && (pathname === route || pathname.startsWith(route + '/')));
-  if (isPublicRoute && !pathname.includes('/edit') && !pathname.includes('/new')) {
+  const isPublicWikiRoute = pathname.startsWith('/wiki') && !pathname.includes('/edit') && !pathname.includes('/new');
+
+  // Allow public access to wiki pages, but not edit/new
+  if (isPublicWikiRoute) {
     return NextResponse.next();
   }
 
   // If user is trying to access a protected route without a session, redirect to login
-  if (!session && protectedRoutes.some(route => pathname.startsWith(route))) {
+  if (!session && (protectedRoutes.some(route => pathname.startsWith(route)) || memberOnlyRoutes.some(route => pathname.startsWith(route)))) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -25,6 +28,10 @@ export function middleware(request: NextRequest) {
   if (session && authRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
+  
+  // A parent trying to access member-only route should be redirected
+  // We can't check role directly here, so we'll rely on server components to handle role-based UI,
+  // but we can add a check in the server actions for mutations.
 
   return NextResponse.next();
 }

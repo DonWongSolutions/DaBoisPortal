@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { redirect, useParams, useRouter } from 'next/navigation';
@@ -18,6 +17,7 @@ import { Bold, Italic, Strikethrough, List, ListOrdered, Heading1, Heading2, Hea
 import { cn } from '@/lib/utils';
 import { useEffect, useState, useActionState } from 'react';
 import { PageHeader } from '@/components/page-header';
+import { AppShell } from '@/components/app-shell';
 
 const MenuBar = ({ editor }: { editor: Editor | null }) => {
     if (!editor) {
@@ -121,22 +121,19 @@ export default function WikiEditSlugPage() {
         fetchData();
     }, [slug, editor]);
 
-    if (loading || !editor || !page) {
+    if (loading || !editor || !page || !user) {
         return <div>Loading Editor...</div>;
     }
     
-    if (!user) {
-        return <div>Redirecting...</div>
-    }
-
     return (
+      <AppShell user={user}>
         <form action={formAction}>
             <PageHeader 
                 title={`Editing: ${page.title}`}
                 description="Use the editor below to make changes."
             >
                 <div className="flex gap-2">
-                    <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
+                    <Button variant="outline" type="button" onClick={() => router.push(`/wiki/${slug}`)}>Cancel</Button>
                     <Button type="submit">Save Changes</Button>
                 </div>
             </PageHeader>
@@ -156,5 +153,6 @@ export default function WikiEditSlugPage() {
                 </CardContent>
             </Card>
         </form>
+      </AppShell>
     )
 }

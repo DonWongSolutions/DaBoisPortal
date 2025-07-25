@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import type { User } from '@/lib/types';
+import { AppShell } from '@/components/app-shell';
+
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -72,7 +74,7 @@ export default function NewWikiPage() {
     }
   
     return (
-        <>
+        <AppShell user={user}>
             <PageHeader
                 title="Create New Wiki Page"
                 description="Create a new page for the public wiki."
@@ -100,7 +102,6 @@ export default function NewWikiPage() {
                     </Card>
                 </form>
             </div>
-        </>
+        </AppShell>
     );
 }
-
