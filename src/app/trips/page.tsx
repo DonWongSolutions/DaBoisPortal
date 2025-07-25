@@ -1,5 +1,6 @@
 
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { getSession } from '@/lib/auth';
 import { getTrips } from '@/lib/data';
 import { AppShell } from '@/components/app-shell';
@@ -44,8 +45,10 @@ function TripCard({ trip }: { trip: Trip }) {
                  </div>
             </CardContent>
             <CardFooter>
-                 <Button variant="outline" className="w-full">
-                    View Details <ChevronsRight className="ml-2 h-4 w-4" />
+                 <Button variant="outline" className="w-full" asChild>
+                    <Link href={`/trips/${trip.id}`}>
+                        View Details <ChevronsRight className="ml-2 h-4 w-4" />
+                    </Link>
                 </Button>
             </CardFooter>
         </Card>
@@ -57,7 +60,7 @@ export default async function TripsPage() {
   if (!user) {
     redirect('/login');
   }
-  const trips = await getTrips();
+  const trips = (await getTrips()).sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
   return (
     <AppShell user={user}>
@@ -65,20 +68,34 @@ export default async function TripsPage() {
         title="Trip Planner"
         description="Collaborate on trip itineraries and budgets."
       >
-        <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Plan a New Trip
+        <Button asChild>
+            <Link href="/trips/new">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Plan a New Trip
+            </Link>
         </Button>
       </PageHeader>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {trips.map(trip => (
-            <TripCard key={trip.id} trip={trip} />
-        ))}
-        {trips.length === 0 && (
-            <p className="text-muted-foreground col-span-full text-center">No trips planned yet.</p>
-        )}
-      </div>
+      {trips.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {trips.map(trip => (
+                <TripCard key={trip.id} trip={trip} />
+            ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
+            <h3 className="text-2xl font-bold tracking-tight">No trips planned yet</h3>
+            <p className="text-muted-foreground mb-4">
+                Get started by planning a new trip.
+            </p>
+            <Button asChild>
+                <Link href="/trips/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Plan a New Trip
+                </Link>
+            </Button>
+        </div>
+      )}
     </AppShell>
   );
 }

@@ -1,15 +1,17 @@
 
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { getSession } from '@/lib/auth';
-import { getEvents, getSettings } from '@/lib/data';
+import { getEvents, getSettings, getTrips } from '@/lib/data';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Check, Mail, Phone, Cake, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Check, Mail, Phone, Cake, Users, Plane, Calendar, ChevronsRight } from 'lucide-react';
 
 export default async function DashboardPage() {
   const user = await getSession();
@@ -19,11 +21,17 @@ export default async function DashboardPage() {
 
   const settings = await getSettings();
   const allEvents = await getEvents();
+  const allTrips = await getTrips();
 
   const upcomingEvents = allEvents
     .filter(event => new Date(event.date) >= new Date())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
+    
+  const upcomingTrips = allTrips
+    .filter(trip => new Date(trip.startDate) >= new Date())
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+    .slice(0, 1);
   
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -32,6 +40,12 @@ export default async function DashboardPage() {
       day: 'numeric',
     });
   };
+
+  const formatDateRange = (start: string, end: string) => {
+    const startDate = new Date(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const endDate = new Date(end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `${startDate} - ${endDate}`;
+  }
 
   return (
     <AppShell user={user}>
@@ -86,36 +100,67 @@ export default async function DashboardPage() {
 
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Upcoming Events</CardTitle>
+              <CardTitle>Upcoming</CardTitle>
               <CardDescription>A glance at what's next.</CardDescription>
             </CardHeader>
-            <CardContent>
-                {upcomingEvents.length > 0 ? (
-                    <ul className="space-y-4">
-                        {upcomingEvents.map(event => (
-                            <li key={event.id} className="flex items-start gap-4">
-                                <div className="flex flex-col items-center justify-center bg-accent text-accent-foreground rounded-md p-2 h-16 w-16">
-                                    <span className="text-sm font-bold">{new Date(event.date).toLocaleString('en-US', { month: 'short' })}</span>
-                                    <span className="text-2xl font-bold">{new Date(event.date).getDate()}</span>
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-semibold">{event.title}</p>
-                                    <p className="text-sm text-muted-foreground">{event.description}</p>
-                                    <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                                      {event.isFamilyEvent && <Users className="h-3 w-3" />}
-                                      <span>Created by {event.createdBy}</span>
+            <CardContent className="space-y-6">
+                <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2"><Calendar className="h-4 w-4" /> Events</h3>
+                    {upcomingEvents.length > 0 ? (
+                        <ul className="space-y-4">
+                            {upcomingEvents.map(event => (
+                                <li key={event.id} className="flex items-start gap-4">
+                                    <div className="flex flex-col items-center justify-center bg-accent text-accent-foreground rounded-md p-2 h-16 w-16">
+                                        <span className="text-sm font-bold">{new Date(event.date).toLocaleString('en-US', { month: 'short' })}</span>
+                                        <span className="text-2xl font-bold">{new Date(event.date).getDate()}</span>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-1 text-sm text-green-600">
-                                    <Check className="h-4 w-4" />
-                                    <span>You're going</span>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p className="text-muted-foreground text-center py-8">No upcoming events. Time to plan something!</p>
-                )}
+                                    <div className="flex-1">
+                                        <p className="font-semibold">{event.title}</p>
+                                        <p className="text-sm text-muted-foreground">{event.description}</p>
+                                        <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                                          {event.isFamilyEvent && <Users className="h-3 w-3" />}
+                                          <span>Created by {event.createdBy}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-sm text-green-600">
+                                        <Check className="h-4 w-4" />
+                                        <span>You're going</span>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-muted-foreground text-center py-4">No upcoming events. Time to plan something!</p>
+                    )}
+                </div>
+                <Separator />
+                 <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2"><Plane className="h-4 w-4" /> Trips</h3>
+                    {upcomingTrips.length > 0 ? (
+                        <div className="space-y-4">
+                            {upcomingTrips.map(trip => (
+                               <Card key={trip.id}>
+                                  <CardHeader>
+                                    <CardTitle>{trip.name}</CardTitle>
+                                    <CardDescription>{trip.destination}</CardDescription>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <p className="text-sm text-muted-foreground">{formatDateRange(trip.startDate, trip.endDate)}</p>
+                                  </CardContent>
+                                   <CardFooter>
+                                     <Link href={`/trips/${trip.id}`} className="w-full">
+                                        <Button variant="outline" className="w-full">
+                                            View Details <ChevronsRight className="ml-2 h-4 w-4" />
+                                        </Button>
+                                     </Link>
+                                   </CardFooter>
+                               </Card>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground text-center py-4">No upcoming trips. Get planning!</p>
+                    )}
+                </div>
             </CardContent>
           </Card>
         </div>

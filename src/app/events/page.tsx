@@ -1,5 +1,6 @@
 
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { getSession } from '@/lib/auth';
 import { getEvents } from '@/lib/data';
 import { AppShell } from '@/components/app-shell';
@@ -71,17 +72,34 @@ export default async function EventsPage() {
         title="Events"
         description="Schedule, view, and respond to events."
       >
-        <Button>
+        <Button asChild>
+          <Link href="/events/new">
             <PlusCircle className="mr-2 h-4 w-4" />
             Create Event
+          </Link>
         </Button>
       </PageHeader>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {events.map(event => (
-            <EventCard key={event.id} event={event} />
-        ))}
-      </div>
+      {events.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {events.map(event => (
+              <EventCard key={event.id} event={event} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
+            <h3 className="text-2xl font-bold tracking-tight">No events yet</h3>
+            <p className="text-muted-foreground mb-4">
+                Get started by creating a new event.
+            </p>
+            <Button asChild>
+                <Link href="/events/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create Event
+                </Link>
+            </Button>
+        </div>
+      )}
     </AppShell>
   );
 }
