@@ -6,7 +6,7 @@ import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Event } from '@/lib/types';
+import type { Event, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 function generateCalendarDays(year: number, month: number) {
@@ -38,7 +38,7 @@ function generateCalendarDays(year: number, month: number) {
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-function ScheduleCalendar({ events, year, month }: { events: Event[], year: number, month: number }) {
+function ScheduleCalendar({ events, year, month, currentUser }: { events: Event[], year: number, month: number, currentUser: User }) {
     const calendarDays = generateCalendarDays(year, month);
     const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
 
@@ -65,15 +65,20 @@ function ScheduleCalendar({ events, year, month }: { events: Event[], year: numb
                                     dayInfo.isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'
                                 )}>{dayInfo.day}</span>
                                 <div className="mt-1 space-y-1 flex-grow">
-                                    {dayEvents.map(event => (
-                                        <div key={event.id} className={cn(
-                                            "p-1 rounded-md text-xs",
-                                            isClash ? 'bg-destructive text-destructive-foreground' : 'bg-accent text-accent-foreground',
-                                            event.type === 'personal' && 'bg-secondary text-secondary-foreground'
-                                        )}>
-                                            {event.title}
-                                        </div>
-                                    ))}
+                                    {dayEvents.map(event => {
+                                        const isCreator = event.createdBy === currentUser.name;
+                                        const eventTitle = (event.type === 'personal' && event.isPrivate && !isCreator) ? "Busy" : event.title;
+                                        
+                                        return (
+                                          <div key={event.id} className={cn(
+                                              "p-1 rounded-md text-xs",
+                                              isClash && event.type === 'group' ? 'bg-destructive text-destructive-foreground' : 'bg-accent text-accent-foreground',
+                                              event.type === 'personal' && 'bg-purple-200 text-purple-800'
+                                          )}>
+                                              {eventTitle}
+                                          </div>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )
@@ -98,13 +103,23 @@ export default async function SchedulePage() {
   
   const memberSchedules = users.map(member => ({
       name: member.name,
-      events: allEvents.filter(event => 
-          (event.type === 'group' && event.responses[member.name] === 'yes') ||
-          (event.type === 'personal' && event.createdBy === member.name)
-      )
+      events: allEvents.filter(event => {
+          if (event.type === 'group') {
+              return event.responses[member.name] === 'yes';
+          }
+          if (event.type === 'personal') {
+             return event.createdBy === member.name;
+          }
+          return false;
+      })
   }));
 
-  const mainScheduleEvents = allEvents.filter(event => event.type === 'group');
+  const mainScheduleEvents = allEvents.filter(event => {
+      // Show all group events and all personal events on the main schedule
+      if(event.type === 'group') return true;
+      if(event.type === 'personal') return true;
+      return false;
+  });
 
   const tabs = [{name: "Main", events: mainScheduleEvents}, ...memberSchedules];
 
@@ -122,7 +137,7 @@ export default async function SchedulePage() {
         </TabsList>
         {tabs.map(tab => (
             <TabsContent key={tab.name} value={tab.name}>
-                <ScheduleCalendar events={tab.events} year={currentYear} month={currentMonth} />
+                <ScheduleCalendar events={tab.events} year={currentYear} month={currentMonth} currentUser={user} />
             </TabsContent>
         ))}
       </Tabs>

@@ -93,39 +93,49 @@ export async function createEventAction(formData: FormData) {
     }
 
     const users = await getUsers();
-    const isFamilyEvent = sessionUser.role === 'admin' && formData.get('isFamilyEvent') === 'on';
-    
-    const newEvent: Event = {
-        id: Date.now(),
-        title: formData.get('title') as string,
-        date: formData.get('date') as string,
-        description: formData.get('description') as string,
-        isFamilyEvent: isFamilyEvent,
-        type: sessionUser.role === 'admin' ? 'group' : 'personal',
-        createdBy: sessionUser.name,
-        responses: {},
-    };
-
-    if (newEvent.type === 'group') {
-        newEvent.responses = users.reduce((acc, user) => {
-            if (user.role !== 'parent') {
-                acc[user.name] = 'pending';
-            }
-            return acc;
-        }, {} as Record<string, UserAvailability>);
-    } else {
-        newEvent.responses[sessionUser.name] = 'yes';
-    }
-
+    const eventType = sessionUser.role === 'admin' ? formData.get('eventType') : 'personal';
 
     const events = await getEvents();
-    events.push(newEvent);
+
+    if (eventType === 'group') {
+        const isFamilyEvent = formData.get('isFamilyEvent') === 'on';
+        const newEvent: Event = {
+            id: Date.now(),
+            title: formData.get('title') as string,
+            date: formData.get('date') as string,
+            description: formData.get('description') as string,
+            isFamilyEvent: isFamilyEvent,
+            type: 'group',
+            createdBy: sessionUser.name,
+            responses: users.reduce((acc, user) => {
+                if (user.role !== 'parent') {
+                    acc[user.name] = 'pending';
+                }
+                return acc;
+            }, {} as Record<string, UserAvailability>),
+        };
+        events.push(newEvent);
+    } else { // personal event
+        const newEvent: Event = {
+            id: Date.now(),
+            title: formData.get('title') as string,
+            date: formData.get('date') as string,
+            description: formData.get('description') as string,
+            isFamilyEvent: false,
+            type: 'personal',
+            createdBy: sessionUser.name,
+            responses: { [sessionUser.name]: 'yes' },
+            isPrivate: formData.get('isPrivate') === 'on',
+        };
+        events.push(newEvent);
+    }
+
     await saveEvents(events);
 
     revalidatePath('/events');
     revalidatePath('/dashboard');
     revalidatePath('/schedule');
-    redirect('/events');
+    redirect(eventType === 'group' ? '/events' : '/schedule');
 }
 
 export async function updateEventAction(eventId: number, formData: FormData) {

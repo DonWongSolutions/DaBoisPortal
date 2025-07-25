@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { createEventAction } from '@/app/actions';
 import { useEffect, useState } from 'react';
 import type { User } from '@/lib/types';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -28,6 +29,7 @@ function SubmitButton() {
 export default function NewEventPage() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [eventType, setEventType] = useState('group');
 
     useEffect(() => {
         async function fetchSession() {
@@ -37,6 +39,9 @@ export default function NewEventPage() {
                     redirect('/login');
                 } else {
                     setUser(sessionUser);
+                    if (sessionUser.role !== 'admin') {
+                        setEventType('personal');
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch session:", error);
@@ -56,9 +61,8 @@ export default function NewEventPage() {
         return <div>Error loading page. Please try logging in again.</div>;
     }
   
-    const pageTitle = user.role === 'admin' ? "Create New Group Event" : "Create Personal Event";
-    const pageDescription = user.role === 'admin' ? "Fill out the details for your new event for all members." : "Block out time on your personal schedule.";
-
+    const pageTitle = "Create New Event";
+    const pageDescription = "Schedule a group event or add a personal event to your calendar.";
 
     return (
         <AppShell user={user}>
@@ -71,9 +75,27 @@ export default function NewEventPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Event Details</CardTitle>
-                            <CardDescription>All fields are required.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
+                            {user.role === 'admin' && (
+                                <div className="space-y-2">
+                                    <Label>Event Type</Label>
+                                    <RadioGroup name="eventType" defaultValue="group" onValueChange={setEventType}>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="group" id="group" />
+                                            <Label htmlFor="group">Group Event</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="personal" id="personal" />
+                                            <Label htmlFor="personal">Personal Event</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            )}
+                             <CardDescription>
+                                {eventType === 'group' ? 'Create a new event for all members to respond to.' : 'Block out time on your personal schedule. Others will see you as "Busy" if marked private.'}
+                            </CardDescription>
+
                             <div className="space-y-2">
                                 <Label htmlFor="title">Event Title</Label>
                                 <Input id="title" name="title" required />
@@ -86,7 +108,8 @@ export default function NewEventPage() {
                                 <Label htmlFor="description">Description</Label>
                                 <Textarea id="description" name="description" required />
                             </div>
-                            {user.role === 'admin' && (
+                            
+                            {eventType === 'group' && user.role === 'admin' && (
                                 <div className="flex items-center justify-between rounded-lg border p-4">
                                     <div className="space-y-0.5">
                                         <Label htmlFor="isFamilyEvent" className="text-base">Family Event</Label>
@@ -95,6 +118,18 @@ export default function NewEventPage() {
                                         </p>
                                     </div>
                                     <Switch id="isFamilyEvent" name="isFamilyEvent" />
+                                </div>
+                            )}
+
+                             {eventType === 'personal' && (
+                                <div className="flex items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="isPrivate" className="text-base">Private Event</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                           If checked, others will only see "Busy" on the schedule.
+                                        </p>
+                                    </div>
+                                    <Switch id="isPrivate" name="isPrivate" />
                                 </div>
                             )}
                         </CardContent>

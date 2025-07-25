@@ -27,6 +27,7 @@ export interface Event {
   createdBy: string;
   responses: Record<string, UserAvailability>;
   suggestions?: EventSuggestion[];
+  isPrivate?: boolean;
 }
 
 export interface ItineraryActivity {

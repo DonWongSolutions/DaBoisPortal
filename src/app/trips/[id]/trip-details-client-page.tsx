@@ -140,6 +140,7 @@ function DayScheduleView({ activities }: { activities: ItineraryActivity[] }) {
     const hours = Array.from({ length: 24 }, (_, i) => i); // 0-23
 
     const timeToMinutes = (time: string) => {
+        if (!time || !time.includes(':')) return 0;
         const [h, m] = time.split(':').map(Number);
         return h * 60 + m;
     }
@@ -160,7 +161,7 @@ function DayScheduleView({ activities }: { activities: ItineraryActivity[] }) {
             {activities.map((activity, index) => {
                 const startMinutes = timeToMinutes(activity.startTime);
                 const endMinutes = timeToMinutes(activity.endTime);
-                const duration = endMinutes - startMinutes;
+                const duration = Math.max(0, endMinutes - startMinutes);
                 
                 return (
                     <div 
@@ -174,10 +175,10 @@ function DayScheduleView({ activities }: { activities: ItineraryActivity[] }) {
                        <p className="font-semibold text-sm">{activity.description}</p>
                        <p className="text-xs">{activity.startTime} - {activity.endTime}</p>
                     </div>
-                )
+                );
             })}
         </div>
-    )
+    );
 }
 
 export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; trip: Trip, allUsers: User[] }) {
@@ -215,7 +216,7 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
                                         </div>
                                     ))}
                                 </div>
-                            ) : <p className="text-muted-foreground text-center py-8">No itinerary items yet. Add one to get started!</p>}
+                            ) : (<p className="text-muted-foreground text-center py-8">No itinerary items yet. Add one to get started!</p>)}
                         </CardContent>
                     </Card>
                      {/* Costs */}
@@ -243,7 +244,7 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
                                         ))}
                                     </TableBody>
                                 </Table>
-                             ) : <p className="text-muted-foreground text-center py-8">No costs logged yet.</p>}
+                             ) : (<p className="text-muted-foreground text-center py-8">No costs logged yet.</p>)}
                         </CardContent>
                         {trip.costs.length > 0 && (
                              <CardFooter className="flex justify-end gap-8 bg-muted/50 p-4 rounded-b-lg">
