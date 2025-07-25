@@ -95,6 +95,31 @@ export async function updateUserAction(formData: FormData) {
     return { success: true, message: 'Profile updated successfully.' };
 }
 
+export async function resetPasswordAction(userId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return { success: false, message: 'Unauthorized.' };
+    }
+    const newPassword = formData.get('password') as string;
+    if (!newPassword) {
+        return { success: false, message: 'Password cannot be empty.' };
+    }
+
+    const users = await getUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+
+    if (userIndex === -1) {
+        return { success: false, message: 'User not found.' };
+    }
+
+    users[userIndex].password = newPassword;
+    await saveUsers(users);
+
+    revalidatePath('/admin');
+    return { success: true, message: 'Password reset successfully.' };
+}
+
+
 export async function updateSettingsAction(settings: AppSettings) {
     const sessionUser = await getSession();
     if (!sessionUser || sessionUser.role !== 'admin') {
