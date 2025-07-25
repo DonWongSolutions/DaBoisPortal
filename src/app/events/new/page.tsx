@@ -31,24 +31,29 @@ export default function NewEventPage() {
 
     useEffect(() => {
         async function fetchSession() {
-            const sessionUser = await getSessionAction();
-            if (!sessionUser) {
+            try {
+                const sessionUser = await getSessionAction();
+                if (!sessionUser) {
+                    redirect('/login');
+                } else {
+                    setUser(sessionUser);
+                }
+            } catch (error) {
+                console.error("Failed to fetch session:", error);
                 redirect('/login');
-            } else {
-                setUser(sessionUser);
+            } finally {
                 setLoading(false);
             }
         }
         fetchSession();
     }, []);
 
-    if (loading || !user) {
-        return (
-          <AppShell user={user!}>
-            <PageHeader title="Create New Event" description="Fill out the details for your new event." />
-            <p>Loading...</p>
-          </AppShell>
-        );
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+  
+    if (!user) {
+        return <div>Error loading page. Please try logging in again.</div>;
     }
   
     return (

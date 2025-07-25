@@ -83,26 +83,31 @@ export default function AdminPage() {
 
     useEffect(() => {
         async function fetchData() {
-            const sessionUser = await getSessionAction();
-            if (!sessionUser || sessionUser.role !== 'admin') {
-                redirect('/dashboard');
-                return;
+            try {
+                const sessionUser = await getSessionAction();
+                if (!sessionUser || sessionUser.role !== 'admin') {
+                    redirect('/dashboard');
+                    return;
+                }
+                const appSettings = await getSettings();
+                setUser(sessionUser);
+                setSettings(appSettings);
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                redirect('/login');
+            } finally {
+                setLoading(false);
             }
-            const appSettings = await getSettings();
-            setUser(sessionUser);
-            setSettings(appSettings);
-            setLoading(false);
         }
         fetchData();
     }, []);
 
-    if (loading || !user || !settings) {
-        return (
-          <AppShell user={user!}> 
-            <PageHeader title="Admin Settings" description="Manage the portal." />
-            <p>Loading...</p>
-          </AppShell>
-        );
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!user || !settings) {
+        return <div>Error loading page. Please try logging in again.</div>;
     }
   
     return (

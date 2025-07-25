@@ -32,26 +32,31 @@ export default function NewTripPage() {
 
     useEffect(() => {
         async function fetchData() {
-            const sessionUser = await getSessionAction();
-            if (!sessionUser) {
+            try {
+                const sessionUser = await getSessionAction();
+                if (!sessionUser) {
+                    redirect('/login');
+                } else {
+                    const users = await getUsers();
+                    setUser(sessionUser);
+                    setAllUsers(users);
+                }
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
                 redirect('/login');
-            } else {
-                const users = await getUsers();
-                setUser(sessionUser);
-                setAllUsers(users);
+            } finally {
                 setLoading(false);
             }
         }
         fetchData();
     }, []);
 
-    if (loading || !user) {
-        return (
-          <AppShell user={user!}>
-            <PageHeader title="Plan a New Trip" description="Fill out the details for your new trip." />
-            <p>Loading...</p>
-          </AppShell>
-        );
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+    
+    if (!user) {
+        return <div>Error loading page. Please try logging in again.</div>;
     }
   
     return (

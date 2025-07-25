@@ -114,33 +114,38 @@ export default function TripDetailsPage() {
 
     useEffect(() => {
         async function fetchData() {
-            const sessionUser = await getSessionAction();
-            if (!sessionUser) {
-                redirect('/login');
-                return;
-            }
-            const allTrips = await getTrips();
-            const currentTrip = allTrips.find(t => t.id === tripId);
-            
-            if (!currentTrip) {
-                 redirect('/trips');
-                 return;
-            }
+            try {
+                const sessionUser = await getSessionAction();
+                if (!sessionUser) {
+                    redirect('/login');
+                    return;
+                }
+                const allTrips = await getTrips();
+                const currentTrip = allTrips.find(t => t.id === tripId);
+                
+                if (!currentTrip) {
+                     redirect('/trips');
+                     return;
+                }
 
-            setUser(sessionUser);
-            setTrip(currentTrip);
-            setLoading(false);
+                setUser(sessionUser);
+                setTrip(currentTrip);
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                redirect('/login');
+            } finally {
+                setLoading(false);
+            }
         }
         fetchData();
     }, [tripId]);
 
-    if (loading || !user || !trip) {
-        return (
-            <AppShell user={user!}>
-                <PageHeader title="Trip Details" />
-                <p>Loading...</p>
-            </AppShell>
-        );
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+    
+    if (!user || !trip) {
+        return <div>Error loading page. Please try logging in again.</div>;
     }
     
     const formatDate = (dateString: string) => {
