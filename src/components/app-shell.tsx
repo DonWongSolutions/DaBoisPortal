@@ -14,8 +14,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarInset,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -86,7 +84,6 @@ function UserMenu({ user }: { user: User }) {
 
 function MainNav({ user }: { user: User }) {
   const pathname = usePathname();
-  const { open } = useSidebar();
   
   return (
     <SidebarMenu>
@@ -137,7 +134,7 @@ export function AppShell({
           </SidebarContent>
           <SidebarFooter />
         </Sidebar>
-        <div className="flex-1 flex flex-col w-0">
+        <div className="flex flex-1 flex-col">
           <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
             <SidebarTrigger className="md:hidden" />
             <div className="flex-1" />
