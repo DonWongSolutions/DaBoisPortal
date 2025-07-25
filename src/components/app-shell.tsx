@@ -120,7 +120,7 @@ export function AppShell({
 }) {
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex min-h-screen">
+       <div className="flex min-h-screen">
         <Sidebar collapsible="icon" side="left">
           <SidebarHeader>
             <div className="flex items-center gap-2 p-2">
@@ -135,7 +135,7 @@ export function AppShell({
           </SidebarContent>
           <SidebarFooter />
         </Sidebar>
-        <div className="flex flex-col flex-1 w-0">
+        <div className="flex flex-col flex-1 min-w-0">
           <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
             <div className="md:hidden">
               <SidebarTrigger />
