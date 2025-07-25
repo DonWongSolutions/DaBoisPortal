@@ -23,7 +23,7 @@ export default async function LoginPage() {
       </div>
       
       {/* Login Form Section */}
-      <div className="relative flex items-center justify-center p-8 lg:col-span-1">
+      <div className="relative flex items-center justify-center min-h-screen p-8 lg:col-span-1">
         <LoginForm users={users} />
       </div>
 

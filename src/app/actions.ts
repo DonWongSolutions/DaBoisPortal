@@ -442,3 +442,28 @@ export async function sendChatMessageAction(formData: FormData) {
 
     revalidatePath('/chat');
 }
+
+export async function exportChatAction(): Promise<string> {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return "Unauthorized";
+    }
+    const messages = await getChatMessages();
+    const header = `Chat History for Da Bois Portal\nExported on: ${new Date().toLocaleString()}\n\n`;
+    const body = messages.map(msg => `[${new Date(msg.timestamp).toLocaleString()}] ${msg.author}: ${msg.text}`).join('\n');
+    return header + body;
+}
+
+export async function clearChatAction() {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return { success: false, message: "Unauthorized" };
+    }
+    try {
+        await saveChatMessages([]);
+        revalidatePath('/chat');
+        return { success: true, message: "Chat history cleared." };
+    } catch(e) {
+        return { success: false, message: "Failed to clear chat history." };
+    }
+}
