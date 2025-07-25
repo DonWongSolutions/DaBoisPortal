@@ -94,13 +94,15 @@ function MainNav({ user }: { user: User }) {
       {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.href}>
             <SidebarMenuButton
-              as={Link}
+              asChild
               href={item.href}
               isActive={pathname === item.href}
               tooltip={item.label}
             >
-              <item.icon className="h-5 w-5" />
-              <span>{item.label}</span>
+              <Link href={item.href}>
+                <item.icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         )
@@ -133,7 +135,7 @@ export function AppShell({
           </SidebarContent>
           <SidebarFooter />
         </Sidebar>
-        <div className="flex flex-col flex-1 w-0">
+        <div className="flex-1 flex flex-col">
           <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
             <div className="md:hidden">
               <SidebarTrigger />
