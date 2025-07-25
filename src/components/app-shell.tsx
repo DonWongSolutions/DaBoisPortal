@@ -129,8 +129,7 @@ function MainNav({ user }: { user: User }) {
         )
       )}
       {canSeeWiki && (
-          <Collapsible asChild>
-            <>
+          <Collapsible>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                         <SidebarMenuButton
@@ -163,7 +162,6 @@ function MainNav({ user }: { user: User }) {
                         ))}
                     </SidebarMenuSub>
                 </CollapsibleContent>
-            </>
           </Collapsible>
       )}
 
