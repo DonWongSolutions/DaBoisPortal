@@ -12,5 +12,20 @@
       "Xavier": "pending",
       "Nathan": "pending"
     }
+  },
+  {
+    "id": 1753424968163,
+    "title": "Disney",
+    "date": "2025-07-26",
+    "description": "Test",
+    "isFamilyEvent": true,
+    "type": "group",
+    "createdBy": "Don",
+    "responses": {
+      "Don": "yes",
+      "Isaac": "pending",
+      "Xavier": "pending",
+      "Nathan": "pending"
+    }
   }
 ]

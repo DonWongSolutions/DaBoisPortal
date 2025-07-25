@@ -264,7 +264,7 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Lightbulb className="h-5 w-5" /> Suggestions</CardTitle>
-                            </Header>
+                            </CardHeader>
                             <CardContent className="space-y-2">
                                 {trip.suggestions.map((s, i) => (
                                      <p key={i} className="text-sm text-muted-foreground"><strong>{s.suggestedBy}:</strong> {s.suggestion}</p>
