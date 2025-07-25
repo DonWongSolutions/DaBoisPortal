@@ -10,10 +10,21 @@ import { Icons } from '@/components/icons';
 
 async function WikiSidebarNav() {
     const pages = await getWikiContent();
+    const user = await getSession();
+    const canEdit = user && ['admin', 'member'].includes(user.role);
+
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Wiki Pages</CardTitle>
+                 {canEdit && (
+                    <Button asChild size="sm">
+                        <Link href="/wiki/new">
+                            <FilePenLine className="mr-2 h-4 w-4" />
+                            New
+                        </Link>
+                    </Button>
+                )}
             </CardHeader>
             <CardContent>
                 <nav className="flex flex-col gap-2">
