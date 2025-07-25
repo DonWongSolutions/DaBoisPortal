@@ -16,6 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuSub,
   SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -125,8 +126,8 @@ function MainNav({ user }: { user: User }) {
 
       <Collapsible>
         <SidebarMenuItem>
-            <CollapsibleTrigger asChild>
-                <SidebarMenuButton isSubmenu isActive={pathname.startsWith('/wiki')}>
+            <CollapsibleTrigger className="w-full">
+                <SidebarMenuButton isSubmenu isActive={pathname.startsWith('/wiki')} className="w-full">
                     <BookOpen className="h-5 w-5" />
                     <span>Wiki</span>
                 </SidebarMenuButton>
