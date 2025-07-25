@@ -37,6 +37,7 @@ import {
   LogOut,
   ChevronDown,
   MessageSquare,
+  User as UserIcon,
 } from 'lucide-react';
 
 const navItems = [
@@ -45,6 +46,7 @@ const navItems = [
   { href: '/schedule', label: 'Schedule', icon: CalendarCheck, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/trips', label: 'Trip Planner', icon: Plane, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/chat', label: 'Chat', icon: MessageSquare, allowedRoles: ['admin', 'member'] },
+  { href: '/profile', label: 'Profile', icon: UserIcon, allowedRoles: ['admin', 'member'] },
   { href: '/admin', label: 'Admin Settings', icon: Settings, allowedRoles: ['admin'] },
 ];
 
@@ -71,9 +73,18 @@ function UserMenu({ user }: { user: User }) {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
         <DropdownMenuSeparator />
+         {user.role !== 'parent' && (
+             <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>Edit Profile</span>
+                </Link>
+            </DropdownMenuItem>
+         )}
+        <DropdownMenuSeparator />
         <form action={logoutAction}>
           <DropdownMenuItem asChild>
-            <button type="submit" className="w-full">
+            <button type="submit" className="w-full text-left">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </button>
@@ -96,7 +107,7 @@ function MainNav({ user }: { user: User }) {
             <SidebarMenuButton
               asChild
               href={item.href}
-              isActive={pathname === item.href}
+              isActive={pathname.startsWith(item.href)}
               tooltip={item.label}
             >
               <Link href={item.href}>
@@ -143,7 +154,7 @@ export function AppShell({
             <div className="w-full flex-1" />
             <UserMenu user={user} />
           </header>
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 overflow-y-auto">
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 overflow-auto">
             {children}
           </main>
           <footer className="p-4 text-center text-sm text-muted-foreground border-t">

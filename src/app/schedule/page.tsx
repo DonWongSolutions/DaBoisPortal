@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Event } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 function generateCalendarDays(year: number, month: number) {
     const date = new Date(year, month, 1);
@@ -47,19 +48,29 @@ function ScheduleCalendar({ events, year, month }: { events: Event[], year: numb
                 <CardTitle className="text-center">{monthName} {year}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-px bg-border border-l border-t">
                     {weekDays.map(day => (
-                        <div key={day} className="text-center font-semibold text-muted-foreground text-sm">{day}</div>
+                        <div key={day} className="text-center font-semibold text-muted-foreground text-sm py-2 bg-muted/50 border-r border-b">{day}</div>
                     ))}
                     {calendarDays.map((dayInfo, index) => {
                         const dayEvents = dayInfo.date ? events.filter(e => new Date(e.date).toDateString() === dayInfo.date?.toDateString()) : [];
                         const isClash = dayEvents.length > 1; // Simple clash detection
                         return (
-                            <div key={index} className={`flex flex-col h-24 md:h-32 border rounded-md p-1.5 overflow-y-auto ${dayInfo.isCurrentMonth ? 'bg-background' : 'bg-muted/50'}`}>
-                                <span className={`text-xs font-medium ${dayInfo.isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'}`}>{dayInfo.day}</span>
+                            <div key={index} className={cn(
+                                "relative flex flex-col min-h-[120px] p-1.5 overflow-y-auto border-r border-b",
+                                dayInfo.isCurrentMonth ? 'bg-background' : 'bg-muted/50'
+                            )}>
+                                <span className={cn(
+                                    "text-xs font-medium",
+                                    dayInfo.isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'
+                                )}>{dayInfo.day}</span>
                                 <div className="mt-1 space-y-1 flex-grow">
                                     {dayEvents.map(event => (
-                                        <div key={event.id} className={`p-1 rounded-md text-xs ${isClash ? 'bg-destructive text-destructive-foreground' : 'bg-accent text-accent-foreground'}`}>
+                                        <div key={event.id} className={cn(
+                                            "p-1 rounded-md text-xs",
+                                            isClash ? 'bg-destructive text-destructive-foreground' : 'bg-accent text-accent-foreground',
+                                            event.type === 'personal' && 'bg-secondary text-secondary-foreground'
+                                        )}>
                                             {event.title}
                                         </div>
                                     ))}
@@ -80,17 +91,22 @@ export default async function SchedulePage() {
   }
 
   const allEvents = await getEvents();
-  const users = await getUsers();
+  const users = await getUsers().then(u => u.filter(user => user.role !== 'parent'));
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
   
   const memberSchedules = users.map(member => ({
       name: member.name,
-      events: allEvents.filter(event => event.responses[member.name] === 'yes')
+      events: allEvents.filter(event => 
+          (event.type === 'group' && event.responses[member.name] === 'yes') ||
+          (event.type === 'personal' && event.createdBy === member.name)
+      )
   }));
 
-  const tabs = [{name: "Main", events: allEvents}, ...memberSchedules];
+  const mainScheduleEvents = allEvents.filter(event => event.type === 'group');
+
+  const tabs = [{name: "Main", events: mainScheduleEvents}, ...memberSchedules];
 
   return (
     <AppShell user={user}>
@@ -99,7 +115,7 @@ export default async function SchedulePage() {
         description="View member schedules and the main event calendar."
       />
       <Tabs defaultValue="Main" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 lg:grid-cols-6">
             {tabs.map(tab => (
                  <TabsTrigger key={tab.name} value={tab.name}>{tab.name}</TabsTrigger>
             ))}

@@ -1,0 +1,128 @@
+
+'use client';
+
+import { useEffect, useState, useActionState } from 'react';
+import { redirect } from 'next/navigation';
+import { getSessionAction, updateUserAction } from '@/app/actions';
+import { AppShell } from '@/components/app-shell';
+import { PageHeader } from '@/components/page-header';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import type { User } from '@/lib/types';
+
+function ProfileForm({ user }: { user: User }) {
+    const { toast } = useToast();
+    
+    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const result = await updateUserAction(formData);
+        if (result.success) {
+            toast({
+                title: "Success",
+                description: result.message,
+            });
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.message,
+            });
+        }
+        return result;
+    }, { success: false, message: ''});
+
+
+    return (
+        <form action={formAction}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Edit Your Profile</CardTitle>
+                    <CardDescription>Update your personal information.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                     <div className="flex items-center gap-4">
+                        <Avatar className="h-20 w-20">
+                            <AvatarImage src={`https://placehold.co/80x80.png`} data-ai-hint="user avatar" />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <Button variant="outline" disabled={user.role !== 'admin'}>Change Picture</Button>
+                         {user.role !== 'admin' && <p className="text-sm text-muted-foreground">Only admins can change profile pictures.</p>}
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input id="email" name="email" type="email" defaultValue={user.email} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input id="phone" name="phone" defaultValue={user.phone} required />
+                    </div>
+                     <Separator />
+                     <p className="text-sm text-muted-foreground">Update your password. Leave blank to keep it unchanged.</p>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="password">New Password</Label>
+                            <Input id="password" name="password" type="password" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                            <Input id="confirmPassword" name="confirmPassword" type="password" />
+                        </div>
+                     </div>
+                </CardContent>
+                <CardFooter>
+                    <Button type="submit">Save Changes</Button>
+                </CardFooter>
+            </Card>
+        </form>
+    );
+}
+
+
+export default function ProfilePage() {
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const sessionUser = await getSessionAction();
+                if (!sessionUser) {
+                    redirect('/login');
+                    return;
+                }
+                setUser(sessionUser);
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                redirect('/login');
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!user) {
+        return <div>Error loading page. Please try logging in again.</div>;
+    }
+  
+    return (
+        <AppShell user={user}>
+            <PageHeader
+                title="Your Profile"
+                description="Manage your account details."
+            />
+            <div className="max-w-2xl mx-auto">
+                <ProfileForm user={user} />
+            </div>
+        </AppShell>
+    );
+}

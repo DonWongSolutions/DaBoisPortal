@@ -33,7 +33,7 @@ export default function NewEventPage() {
         async function fetchSession() {
             try {
                 const sessionUser = await getSessionAction();
-                if (!sessionUser) {
+                if (!sessionUser || sessionUser.role === 'parent') {
                     redirect('/login');
                 } else {
                     setUser(sessionUser);
@@ -56,11 +56,15 @@ export default function NewEventPage() {
         return <div>Error loading page. Please try logging in again.</div>;
     }
   
+    const pageTitle = user.role === 'admin' ? "Create New Group Event" : "Create Personal Event";
+    const pageDescription = user.role === 'admin' ? "Fill out the details for your new event for all members." : "Block out time on your personal schedule.";
+
+
     return (
         <AppShell user={user}>
             <PageHeader
-                title="Create New Event"
-                description="Fill out the details for your new event."
+                title={pageTitle}
+                description={pageDescription}
             />
             <div className="max-w-2xl mx-auto">
                 <form action={createEventAction}>
@@ -82,15 +86,17 @@ export default function NewEventPage() {
                                 <Label htmlFor="description">Description</Label>
                                 <Textarea id="description" name="description" required />
                             </div>
-                            <div className="flex items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <Label htmlFor="isFamilyEvent" className="text-base">Family Event</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Is this event open to family members?
-                                    </p>
+                            {user.role === 'admin' && (
+                                <div className="flex items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="isFamilyEvent" className="text-base">Family Event</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            Is this event open to family members?
+                                        </p>
+                                    </div>
+                                    <Switch id="isFamilyEvent" name="isFamilyEvent" />
                                 </div>
-                                <Switch id="isFamilyEvent" name="isFamilyEvent" />
-                            </div>
+                            )}
                         </CardContent>
                         <CardFooter>
                             <SubmitButton />

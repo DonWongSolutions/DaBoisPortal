@@ -23,6 +23,7 @@ export interface Event {
   date: string;
   description: string;
   isFamilyEvent: boolean;
+  type: 'group' | 'personal';
   createdBy: string;
   responses: Record<string, UserAvailability>;
   suggestions?: EventSuggestion[];

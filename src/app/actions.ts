@@ -4,8 +4,8 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
-import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, getChatMessages, saveChatMessages } from '@/lib/data';
-import type { AppSettings, Event, Trip, UserAvailability, ChatMessage } from '@/lib/types';
+import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, getChatMessages, saveChatMessages, saveUsers } from '@/lib/data';
+import type { AppSettings, Event, Trip, UserAvailability, ChatMessage, User } from '@/lib/types';
 import * as ical from 'node-ical';
 
 
@@ -33,6 +33,43 @@ export async function logoutAction() {
   redirect('/login');
 }
 
+export async function updateUserAction(formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser) {
+        redirect('/login');
+    }
+
+    const users = await getUsers();
+    const userIndex = users.findIndex(u => u.id === sessionUser.id);
+    if (userIndex === -1) {
+        return { success: false, message: 'User not found.' };
+    }
+
+    const newPassword = formData.get('password') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
+
+    if (newPassword && newPassword !== confirmPassword) {
+        return { success: false, message: 'Passwords do not match.' };
+    }
+    
+    const updatedUser: User = { ...users[userIndex] };
+    updatedUser.email = formData.get('email') as string;
+    updatedUser.phone = formData.get('phone') as string;
+    if (newPassword) {
+        updatedUser.password = newPassword;
+    }
+    
+    users[userIndex] = updatedUser;
+    await saveUsers(users);
+
+    // Re-authenticate user with potentially new details, except password
+    await setSession(updatedUser.name);
+    
+    revalidatePath('/profile');
+    revalidatePath('/dashboard');
+    return { success: true, message: 'Profile updated successfully.' };
+}
+
 export async function updateSettingsAction(settings: AppSettings) {
     const sessionUser = await getSession();
     if (!sessionUser || sessionUser.role !== 'admin') {
@@ -51,26 +88,35 @@ export async function updateSettingsAction(settings: AppSettings) {
 
 export async function createEventAction(formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser || sessionUser.role !== 'admin') {
+    if (!sessionUser || sessionUser.role === 'parent') {
         redirect('/login');
     }
 
     const users = await getUsers();
-
+    const isFamilyEvent = sessionUser.role === 'admin' && formData.get('isFamilyEvent') === 'on';
+    
     const newEvent: Event = {
         id: Date.now(),
         title: formData.get('title') as string,
         date: formData.get('date') as string,
         description: formData.get('description') as string,
-        isFamilyEvent: formData.get('isFamilyEvent') === 'on',
+        isFamilyEvent: isFamilyEvent,
+        type: sessionUser.role === 'admin' ? 'group' : 'personal',
         createdBy: sessionUser.name,
-        responses: users.reduce((acc, user) => {
+        responses: {},
+    };
+
+    if (newEvent.type === 'group') {
+        newEvent.responses = users.reduce((acc, user) => {
             if (user.role !== 'parent') {
                 acc[user.name] = 'pending';
             }
             return acc;
-        }, {} as Record<string, 'yes' | 'no' | 'maybe' | 'pending'>),
-    };
+        }, {} as Record<string, UserAvailability>);
+    } else {
+        newEvent.responses[sessionUser.name] = 'yes';
+    }
+
 
     const events = await getEvents();
     events.push(newEvent);
@@ -122,7 +168,7 @@ export async function updateEventResponseAction(eventId: number, formData: FormD
     const events = await getEvents();
     const event = events.find(e => e.id === eventId);
 
-    if (event) {
+    if (event && event.type === 'group') {
         event.responses[sessionUser.name] = response;
         await saveEvents(events);
         revalidatePath('/events');
@@ -189,6 +235,7 @@ export async function importCalendarAction(formData: FormData) {
                     date: (calEvent.start as Date).toISOString().split('T')[0],
                     description: calEvent.description as string || '',
                     isFamilyEvent: false,
+                    type: 'group',
                     createdBy: sessionUser.name,
                     responses: { ...allUsersResponses },
                 };

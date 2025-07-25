@@ -88,8 +88,8 @@ export async function getUsers(): Promise<User[]> {
       },
       {
         "id": 5,
-        "name": "Dad",
-        "password": "password",
+        "name": "Parents",
+        "password": "Parents",
         "role": "parent",
         "age": 55,
         "birthday": "1969-01-01",
@@ -98,6 +98,10 @@ export async function getUsers(): Promise<User[]> {
       }
     ];
     return readJsonFile<User[]>('users.json', defaultUsers);
+}
+
+export async function saveUsers(users: User[]): Promise<void> {
+    await writeJsonFile('users.json', users);
 }
 
 export async function getEvents(): Promise<Event[]> {
