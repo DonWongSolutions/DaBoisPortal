@@ -104,7 +104,7 @@ export default async function EventsPage() {
         title="Events"
         description="Schedule, view, and respond to events."
       >
-        {user.role !== 'parent' && (
+        {user.role === 'admin' && (
             <div className="flex items-center gap-2">
                <ImportCalendarForm />
                 <Button asChild>
@@ -127,9 +127,9 @@ export default async function EventsPage() {
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
             <h3 className="text-2xl font-bold tracking-tight">No events yet</h3>
             <p className="text-muted-foreground mb-4">
-                {user.role !== 'parent' ? "Get started by creating a new event or importing a calendar." : "No events have been created yet."}
+                {user.role === 'admin' ? "Get started by creating a new event or importing a calendar." : "No events have been created yet."}
             </p>
-             {user.role !== 'parent' && (
+             {user.role === 'admin' && (
                 <div className="flex items-center gap-2">
                     <ImportCalendarForm />
                     <Button asChild>

@@ -42,8 +42,8 @@
   },
   {
     "id": 5,
-    "name": "Dad",
-    "password": "password",
+    "name": "Parents",
+    "password": "Parents",
     "role": "parent",
     "age": 55,
     "birthday": "1969-01-01",

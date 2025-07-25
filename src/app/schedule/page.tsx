@@ -47,7 +47,7 @@ function ScheduleCalendar({ events, year, month }: { events: Event[], year: numb
                 <CardTitle className="text-center">{monthName} {year}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-2">
                     {weekDays.map(day => (
                         <div key={day} className="text-center font-semibold text-muted-foreground text-sm">{day}</div>
                     ))}
@@ -55,9 +55,9 @@ function ScheduleCalendar({ events, year, month }: { events: Event[], year: numb
                         const dayEvents = dayInfo.date ? events.filter(e => new Date(e.date).toDateString() === dayInfo.date?.toDateString()) : [];
                         const isClash = dayEvents.length > 1; // Simple clash detection
                         return (
-                            <div key={index} className={`h-24 md:h-32 border rounded-md p-1.5 overflow-y-auto ${dayInfo.isCurrentMonth ? 'bg-background' : 'bg-muted/50'}`}>
+                            <div key={index} className={`flex flex-col h-24 md:h-32 border rounded-md p-1.5 overflow-y-auto ${dayInfo.isCurrentMonth ? 'bg-background' : 'bg-muted/50'}`}>
                                 <span className={`text-xs font-medium ${dayInfo.isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'}`}>{dayInfo.day}</span>
-                                <div className="mt-1 space-y-1">
+                                <div className="mt-1 space-y-1 flex-grow">
                                     {dayEvents.map(event => (
                                         <div key={event.id} className={`p-1 rounded-md text-xs ${isClash ? 'bg-destructive text-destructive-foreground' : 'bg-accent text-accent-foreground'}`}>
                                             {event.title}
@@ -99,7 +99,7 @@ export default async function SchedulePage() {
         description="View member schedules and the main event calendar."
       />
       <Tabs defaultValue="Main" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
             {tabs.map(tab => (
                  <TabsTrigger key={tab.name} value={tab.name}>{tab.name}</TabsTrigger>
             ))}

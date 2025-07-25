@@ -1,7 +1,7 @@
 
 export interface User {
   id: number;
-  name: 'Don' | 'Isaac' | 'Xavier' | 'Nathan' | 'Dad';
+  name: 'Don' | 'Isaac' | 'Xavier' | 'Nathan' | 'Parents';
   password?: string;
   role: 'admin' | 'member' | 'parent';
   age: number;
