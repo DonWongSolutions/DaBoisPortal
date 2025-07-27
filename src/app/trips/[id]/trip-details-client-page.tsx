@@ -2,6 +2,7 @@
 'use client';
 
 import { useRef, useActionState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,10 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { addItineraryItemAction, addCostItemAction, addTripSuggestionAction } from '@/app/actions';
-import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send } from 'lucide-react';
+import { addItineraryItemAction, addCostItemAction, addTripSuggestionAction, createEventFromTripAction } from '@/app/actions';
+import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send, Megaphone } from 'lucide-react';
 import type { Trip, User, ItineraryActivity } from '@/lib/types';
 import { useFormStatus } from 'react-dom';
 import { cn } from '@/lib/utils';
@@ -198,7 +200,69 @@ function DayScheduleView({ activities }: { activities: ItineraryActivity[] }) {
     );
 }
 
-export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; trip: Trip, allUsers: User[] }) {
+function PublishEventForm({ trip, eventExists }: { trip: Trip, eventExists: boolean }) {
+    const { toast } = useToast();
+    const router = useRouter();
+
+    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const result = await createEventFromTripAction(formData);
+        if (result.success) {
+            toast({
+                title: "Success",
+                description: result.message,
+            });
+            // Redirect to events page after a short delay to show toast
+            setTimeout(() => router.push('/events'), 1000);
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.message,
+            });
+        }
+        return result;
+    }, { success: false, message: ''});
+    const { pending } = useFormStatus();
+
+    return (
+        <form action={formAction}>
+            <input type="hidden" name="tripId" value={trip.id} />
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5" /> Event Actions</CardTitle>
+                </CardHeader>
+                 <CardContent>
+                    {eventExists ? (
+                        <p className="text-sm text-muted-foreground">An event for this trip has already been published.</p>
+                    ) : (
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <Label htmlFor="isFamilyEvent" className="text-base">Include Parents</Label>
+                                <p className="text-sm text-muted-foreground">
+                                    Make this event visible to parents.
+                                </p>
+                            </div>
+                            <Switch id="isFamilyEvent" name="isFamilyEvent" />
+                        </div>
+                    )}
+                 </CardContent>
+                <CardFooter>
+                    {eventExists ? (
+                         <Button className="w-full" asChild>
+                            <a href="/events">View Event</a>
+                        </Button>
+                    ) : (
+                        <Button type="submit" className="w-full" disabled={pending}>
+                            {pending ? 'Publishing...' : 'Publish to Events'}
+                        </Button>
+                    )}
+                </CardFooter>
+            </Card>
+        </form>
+    )
+}
+
+export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { user: User; trip: Trip, allUsers: User[], eventExists: boolean }) {
     
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -206,6 +270,7 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
 
     const totalCost = trip.costs.reduce((sum, item) => sum + item.amount, 0);
     const costPerPerson = trip.attendees.length > 0 ? totalCost / trip.attendees.length : 0;
+    const canManageTrip = user.role === 'admin' || user.name === trip.createdBy;
 
     return (
         <AppShell user={user}>
@@ -319,6 +384,8 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
                             </div>
                         </CardContent>
                     </Card>
+                     {canManageTrip && <PublishEventForm trip={trip} eventExists={eventExists} /> }
+
                     {user.role === 'parent' ? (
                         <AddSuggestionForm tripId={trip.id} />
                     ) : (

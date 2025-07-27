@@ -30,6 +30,7 @@ export interface Event {
   responses: Record<string, UserAvailability>;
   suggestions?: EventSuggestion[];
   isPrivate?: boolean;
+  tripId?: number;
 }
 
 export interface ItineraryActivity {

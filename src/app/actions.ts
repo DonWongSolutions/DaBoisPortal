@@ -368,6 +368,67 @@ export async function createTripAction(formData: FormData) {
     redirect('/trips');
 }
 
+export async function createEventFromTripAction(formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role === 'parent') {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    const tripId = Number(formData.get('tripId'));
+    const isFamilyEvent = formData.get('isFamilyEvent') === 'on';
+
+    if (!tripId) {
+         return { success: false, message: 'Trip ID is missing.' };
+    }
+
+    const allEvents = await getEvents();
+    const existingEvent = allEvents.find(e => e.tripId === tripId);
+
+    if(existingEvent) {
+        return { success: false, message: 'An event for this trip already exists.' };
+    }
+
+    const allTrips = await getTrips();
+    const trip = allTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+        return { success: false, message: 'Trip not found.' };
+    }
+
+    // You can only create an event if you are the creator or an admin
+    if (trip.createdBy !== sessionUser.name && sessionUser.role !== 'admin') {
+        return { success: false, message: 'You are not authorized to create an event for this trip.' };
+    }
+
+    const users = await getUsers();
+    const newEvent: Event = {
+        id: Date.now(),
+        tripId: trip.id,
+        title: trip.name,
+        date: trip.startDate,
+        description: `This event is for the trip to ${trip.destination}. Please RSVP.`,
+        isFamilyEvent: isFamilyEvent,
+        type: 'group',
+        createdBy: sessionUser.name,
+        responses: users.reduce((acc, user) => {
+            if (user.role !== 'parent') {
+                acc[user.name] = 'pending';
+            }
+            return acc;
+        }, {} as Record<string, UserAvailability>),
+    };
+
+    allEvents.push(newEvent);
+    await saveEvents(allEvents);
+
+    revalidatePath('/events');
+    revalidatePath('/dashboard');
+    revalidatePath('/schedule');
+    revalidatePath(`/trips/${tripId}`);
+
+    return { success: true, message: 'Event created successfully! Redirecting...' };
+}
+
 export async function addItineraryItemAction(tripId: number, formData: FormData) {
     const sessionUser = await getSession();
     if (!sessionUser || sessionUser.role === 'parent') {

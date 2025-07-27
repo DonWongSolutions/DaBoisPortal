@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, PlusCircle, Users, User, CheckCircle, XCircle, HelpCircle, MoreHorizontal, Lightbulb, UserX } from 'lucide-react';
+import { Pencil, PlusCircle, Users, User, CheckCircle, XCircle, HelpCircle, MoreHorizontal, Lightbulb, UserX, Plane } from 'lucide-react';
 import type { Event, User as TUser, UserAvailability } from '@/lib/types';
 import { EventResponseForm, ImportCalendarForm, SuggestionForm } from './event-actions';
 import { Separator } from '@/components/ui/separator';
@@ -32,7 +32,9 @@ function EventCard({ event, user }: { event: Event, user: TUser }) {
     const isPast = eventDate < now;
     
     let badge;
-    if (event.type === 'personal') {
+    if (event.tripId) {
+        badge = <Badge variant="secondary"><Plane className="mr-1 h-3 w-3" /> Trip</Badge>;
+    } else if (event.type === 'personal') {
         badge = <Badge variant="secondary"><UserX className="mr-1 h-3 w-3" /> Personal</Badge>;
     } else if (event.isFamilyEvent) {
         badge = <Badge variant="secondary"><Users className="mr-1 h-3 w-3" /> Family</Badge>;
@@ -92,8 +94,17 @@ function EventCard({ event, user }: { event: Event, user: TUser }) {
                 </div>
                )}
 
+               {event.tripId && (
+                    <Button variant="outline" size="sm" asChild className="w-full">
+                        <Link href={`/trips/${event.tripId}`}>
+                            <Plane className="mr-2 h-4 w-4" />
+                            View Trip Details
+                        </Link>
+                    </Button>
+               )}
+
                 {user.role === 'admin' && event.type === 'group' && (
-                     <Button variant="outline" size="sm" asChild className="w-full">
+                     <Button variant="outline" size="sm" asChild className="w-full mt-2">
                         <Link href={`/events/${event.id}/edit`}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit Event
