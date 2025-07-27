@@ -529,6 +529,10 @@ export async function rateLinkAction(linkId: number, rating: number) {
     }
 }
 
+export async function getLinksAction() {
+    return await getLinks();
+}
+
 export async function getSessionAction() {
   return await getSession();
 }

@@ -39,7 +39,7 @@ export default function NewTripPage() {
                 } else {
                     const users = await getUsers();
                     setUser(sessionUser);
-                    setAllUsers(users);
+                    setAllUsers(users.filter(u => u.role !== 'parent'));
                 }
             } catch (error) {
                 console.error("Failed to fetch data:", error);

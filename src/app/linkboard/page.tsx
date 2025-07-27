@@ -4,9 +4,8 @@
 import { useEffect, useState, useActionState, useRef } from 'react';
 import { redirect } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { getSessionAction, createLinkAction, rateLinkAction } from '@/app/actions';
+import { getSessionAction, createLinkAction, rateLinkAction, getLinksAction } from '@/app/actions';
 import { getTrips } from '@/lib/data.client';
-import { getLinks } from '@/lib/data';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -150,6 +149,11 @@ export default function LinkBoardPage() {
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
+    const fetchLinks = async () => {
+        const fetchedLinks = await getLinksAction();
+        setLinks(fetchedLinks.sort((a,b) => b.createdAt.localeCompare(a.createdAt)));
+    }
+
     useEffect(() => {
         async function fetchData() {
             try {
@@ -160,11 +164,10 @@ export default function LinkBoardPage() {
                 }
                 setUser(sessionUser);
                 
-                const [fetchedLinks, fetchedTrips] = await Promise.all([
-                    getLinks(),
+                const [_, fetchedTrips] = await Promise.all([
+                    fetchLinks(),
                     getTrips()
                 ]);
-                setLinks(fetchedLinks.sort((a,b) => b.createdAt.localeCompare(a.createdAt)));
                 setTrips(fetchedTrips);
 
             } catch (error) {
@@ -180,8 +183,7 @@ export default function LinkBoardPage() {
         const result = await rateLinkAction(linkId, rating);
         if (result.success) {
             toast({ title: 'Success', description: result.message });
-            const fetchedLinks = await getLinks();
-            setLinks(fetchedLinks.sort((a,b) => b.createdAt.localeCompare(a.createdAt)));
+            await fetchLinks();
         } else {
              toast({ variant: 'destructive', title: 'Error', description: result.message });
         }
