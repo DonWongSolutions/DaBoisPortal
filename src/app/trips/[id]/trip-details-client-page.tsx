@@ -272,6 +272,11 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
     const costPerPerson = trip.attendees.length > 0 ? totalCost / trip.attendees.length : 0;
     const canManageTrip = user.role === 'admin' || user.name === trip.createdBy;
 
+    const defaultAccordionItems = ["itinerary", "costs"];
+    if (trip.suggestions && trip.suggestions.length > 0) {
+        defaultAccordionItems.push("suggestions");
+    }
+
     return (
         <AppShell user={user}>
             <PageHeader
@@ -281,7 +286,7 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
 
             <div className="grid gap-8 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-4">
-                    <Accordion type="multiple" className="w-full space-y-4">
+                    <Accordion type="multiple" defaultValue={defaultAccordionItems} className="w-full space-y-4">
                         <AccordionItem value="itinerary" className="border rounded-lg bg-card">
                              <AccordionTrigger className="p-6">
                                 <CardTitle className="flex items-center gap-2 text-xl"><Plane className="h-5 w-5" /> Itinerary</CardTitle>
@@ -399,7 +404,3 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
         </AppShell>
     );
 }
-
-    
-
-    
