@@ -1,5 +1,4 @@
 
-
 'use client';
 
 // This file contains client-safe versions of data-fetching functions.
@@ -9,13 +8,18 @@ import type { User, Event, Trip, AppSettings } from './types';
 
 // Since we cannot access the filesystem on the client, these functions
 // would typically fetch data from an API route.
-// For this prototype, we'll return mock data or empty arrays.
 
 export async function getUsers(): Promise<User[]> {
-  // In a real app, this would fetch from an API endpoint
-  // For now, we'll rely on server-side fetching and passing props.
-  // This function is here to prevent build errors if accidentally imported.
-  return [];
+  try {
+    const res = await fetch('/api/users');
+    if (!res.ok) {
+      throw new Error('Failed to fetch users');
+    }
+    return await res.json();
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
 }
 
 export async function getEvents(): Promise<Event[]> {

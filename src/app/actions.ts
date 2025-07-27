@@ -94,6 +94,36 @@ export async function updateUserAction(formData: FormData) {
     return { success: true, message: 'Profile updated successfully.' };
 }
 
+export async function adminUpdateUserAction(userId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    const users = await getUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+
+    if (userIndex === -1) {
+        return { success: false, message: 'User not found.' };
+    }
+
+    const updatedUser = { ...users[userIndex] };
+    updatedUser.email = formData.get('email') as string;
+    updatedUser.phone = formData.get('phone') as string;
+    
+    const newPassword = formData.get('password') as string;
+    if (newPassword) {
+        updatedUser.password = newPassword;
+    }
+
+    users[userIndex] = updatedUser;
+    await saveUsers(users);
+    
+    revalidatePath('/admin');
+    return { success: true, message: 'User updated successfully.' };
+}
+
+
 export async function resetPasswordAction(userId: number, formData: FormData) {
     const sessionUser = await getSession();
     if (!sessionUser || sessionUser.role !== 'admin') {

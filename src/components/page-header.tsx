@@ -10,7 +10,7 @@ export function PageHeader({ title, description, className, children, ...props }
     return (
         <div className={cn("flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8", className)} {...props}>
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl font-headline">
+                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">
                     {title}
                 </h1>
                 {description && (

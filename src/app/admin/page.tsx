@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { updateSettingsAction, getSessionAction, resetPasswordAction } from '@/app/actions';
+import { updateSettingsAction, getSessionAction, adminUpdateUserAction } from '@/app/actions';
 import type { User, AppSettings } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -78,11 +78,11 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
     );
 }
 
-function ResetPasswordDialog({ user, children }: { user: User, children: React.ReactNode }) {
+function EditUserDialog({ user, children }: { user: User, children: React.ReactNode }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
-     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
-        const result = await resetPasswordAction(user.id, formData);
+    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const result = await adminUpdateUserAction(user.id, formData);
         if (result.success) {
             toast({
                 title: "Success",
@@ -105,17 +105,29 @@ function ResetPasswordDialog({ user, children }: { user: User, children: React.R
             <DialogContent>
                 <form action={formAction}>
                     <DialogHeader>
-                        <DialogTitle>Reset Password for {user.name}</DialogTitle>
+                        <DialogTitle>Edit User: {user.name}</DialogTitle>
                         <DialogDescription>
-                            Enter a new password for the user. They will be able to use this password to log in immediately.
+                            Update the user's details or reset their password.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                        <Label htmlFor="password">New Password</Label>
-                        <Input id="password" name="password" type="password" required />
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input id="email" name="email" type="email" defaultValue={user.email} required />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="phone">Phone Number</Label>
+                            <Input id="phone" name="phone" defaultValue={user.phone} required />
+                        </div>
+                        <Separator />
+                        <div>
+                             <Label htmlFor="password">New Password</Label>
+                             <p className="text-sm text-muted-foreground pb-2">Leave blank to keep the current password.</p>
+                             <Input id="password" name="password" type="password" />
+                        </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit">Reset Password</Button>
+                        <Button type="submit">Save Changes</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -137,6 +149,7 @@ function UserManagement({ users, adminUser }: { users: User[], adminUser: User }
                             <TableHead>Name</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Email</TableHead>
+                             <TableHead>Phone</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -146,10 +159,11 @@ function UserManagement({ users, adminUser }: { users: User[], adminUser: User }
                                 <TableCell className="font-medium">{user.name}</TableCell>
                                 <TableCell>{user.role}</TableCell>
                                 <TableCell>{user.email}</TableCell>
+                                <TableCell>{user.phone}</TableCell>
                                 <TableCell className="text-right">
-                                    <ResetPasswordDialog user={user}>
-                                        <Button variant="outline" size="sm">Reset Password</Button>
-                                    </ResetPasswordDialog>
+                                    <EditUserDialog user={user}>
+                                        <Button variant="outline" size="sm">Edit User</Button>
+                                    </EditUserDialog>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -169,6 +183,7 @@ export default function AdminPage() {
 
     useEffect(() => {
         async function fetchData() {
+            setLoading(true);
             try {
                 const sessionUser = await getSessionAction();
                 if (!sessionUser || sessionUser.role !== 'admin') {

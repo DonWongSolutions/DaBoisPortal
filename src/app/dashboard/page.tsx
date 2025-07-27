@@ -49,23 +49,28 @@ export default async function DashboardPage() {
 
   return (
     <AppShell user={user}>
-      <PageHeader 
-        title={`Welcome, ${user.name}!`}
-        description="Here's a quick overview of what's happening."
-      />
-
-      <div className="space-y-8">
-        <Card className="overflow-hidden">
-            <Image 
-                src={settings.dashboardBannerUrl}
-                alt="Dashboard Banner"
-                width={1200}
-                height={400}
-                className="w-full h-auto object-cover"
-                data-ai-hint="abstract texture"
+      <div
+        className="relative w-full h-80 rounded-lg overflow-hidden mb-8"
+        data-ai-hint="abstract texture"
+      >
+        <Image 
+            src={settings.dashboardBannerUrl}
+            alt="Dashboard Banner"
+            fill
+            className="object-cover"
+            priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
+        <div className="absolute inset-0 flex flex-col justify-end p-8">
+            <PageHeader 
+                title={`Welcome, ${user.name}!`}
+                description="Here's a quick overview of what's happening."
+                className="text-white !mb-0"
             />
-        </Card>
-        
+        </div>
+      </div>
+      
+      <div className="space-y-8">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           <Card className="lg:col-span-1">
             <CardHeader>
