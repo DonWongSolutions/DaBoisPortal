@@ -3,7 +3,7 @@
 import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
-import type { User, Event, Trip, AppSettings, ChatMessage } from './types';
+import type { User, Event, Trip, AppSettings, Link } from './types';
 
 const dataPath = path.join(process.cwd(), 'data');
 
@@ -135,10 +135,10 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
     await writeJsonFile('settings.json', settings);
 }
 
-export async function getChatMessages(): Promise<ChatMessage[]> {
-    return readJsonFile<ChatMessage[]>('chat.json', []);
+export async function getLinks(): Promise<Link[]> {
+    return readJsonFile<Link[]>('links.json', []);
 }
 
-export async function saveChatMessages(messages: ChatMessage[]): Promise<void> {
-    await writeJsonFile('chat.json', messages);
+export async function saveLinks(links: Link[]): Promise<void> {
+    await writeJsonFile('links.json', links);
 }

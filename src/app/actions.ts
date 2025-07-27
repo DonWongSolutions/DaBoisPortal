@@ -4,8 +4,8 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
-import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, getChatMessages, saveChatMessages, saveUsers } from '@/lib/data';
-import type { AppSettings, Event, Trip, UserAvailability, ChatMessage, User } from '@/lib/types';
+import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, saveUsers, getLinks, saveLinks } from '@/lib/data';
+import type { AppSettings, Event, Trip, UserAvailability, User, Link as LinkType, LinkRating } from '@/lib/types';
 import * as ical from 'node-ical';
 
 
@@ -465,59 +465,70 @@ export async function addTripSuggestionAction(tripId: number, formData: FormData
     }
 }
 
+export async function createLinkAction(formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser) {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    try {
+        const newLink: LinkType = {
+            id: Date.now(),
+            url: formData.get('url') as string,
+            title: formData.get('title') as string,
+            description: formData.get('description') as string,
+            tripId: formData.get('tripId') ? Number(formData.get('tripId')) : undefined,
+            createdBy: sessionUser.name,
+            createdAt: new Date().toISOString(),
+            ratings: [],
+        };
+
+        const links = await getLinks();
+        links.push(newLink);
+        await saveLinks(links);
+
+        revalidatePath('/linkboard');
+        return { success: true, message: 'Link added successfully.' };
+    } catch (error) {
+        console.error(error);
+        return { success: false, message: 'Failed to add link.' };
+    }
+}
+
+export async function rateLinkAction(linkId: number, rating: number) {
+     const sessionUser = await getSession();
+    if (!sessionUser) {
+        return { success: false, message: 'Unauthorized.' };
+    }
+    if (rating < 1 || rating > 5) {
+        return { success: false, message: 'Invalid rating.' };
+    }
+    
+    try {
+        const links = await getLinks();
+        const linkIndex = links.findIndex(l => l.id === linkId);
+        if (linkIndex === -1) {
+            return { success: false, message: 'Link not found.' };
+        }
+
+        const link = links[linkIndex];
+        const existingRatingIndex = link.ratings.findIndex(r => r.userId === sessionUser.id);
+        
+        if (existingRatingIndex > -1) {
+            link.ratings[existingRatingIndex].rating = rating;
+        } else {
+            link.ratings.push({ userId: sessionUser.id, rating });
+        }
+        
+        await saveLinks(links);
+        revalidatePath('/linkboard');
+        return { success: true, message: 'Rating submitted.' };
+    } catch (error) {
+         console.error(error);
+        return { success: false, message: 'Failed to submit rating.' };
+    }
+}
+
 export async function getSessionAction() {
   return await getSession();
-}
-
-export async function getChatMessagesAction() {
-    return await getChatMessages();
-}
-
-export async function sendChatMessageAction(formData: FormData) {
-    const sessionUser = await getSession();
-    if (!sessionUser || sessionUser.role === 'parent') {
-        return;
-    }
-    const text = formData.get('message') as string;
-    if (!text.trim()) {
-        return;
-    }
-
-    const newMessage: ChatMessage = {
-        id: Date.now(),
-        author: sessionUser.name,
-        text: text.trim(),
-        timestamp: new Date().toISOString(),
-    };
-
-    const messages = await getChatMessages();
-    messages.push(newMessage);
-    await saveChatMessages(messages);
-
-    revalidatePath('/chat');
-}
-
-export async function exportChatAction(): Promise<string> {
-    const sessionUser = await getSession();
-    if (!sessionUser || sessionUser.role !== 'admin') {
-        return "Unauthorized";
-    }
-    const messages = await getChatMessages();
-    const header = `Chat History for Da Bois Portal\nExported on: ${new Date().toLocaleString()}\n\n`;
-    const body = messages.map(msg => `[${new Date(msg.timestamp).toLocaleString()}] ${msg.author}: ${msg.text}`).join('\n');
-    return header + body;
-}
-
-export async function clearChatAction() {
-    const sessionUser = await getSession();
-    if (!sessionUser || sessionUser.role !== 'admin') {
-        return { success: false, message: "Unauthorized" };
-    }
-    try {
-        await saveChatMessages([]);
-        revalidatePath('/chat');
-        return { success: true, message: "Chat history cleared." };
-    } catch(e) {
-        return { success: false, message: "Failed to clear chat history." };
-    }
 }

@@ -36,9 +36,8 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  MessageSquare,
   User as UserIcon,
-  BookOpen,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 
@@ -47,7 +46,7 @@ const navItems = [
   { href: '/events', label: 'Events', icon: Calendar, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/schedule', label: 'Schedule', icon: CalendarCheck, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/trips', label: 'Trip Planner', icon: Plane, allowedRoles: ['admin', 'member', 'parent'] },
-  { href: '/chat', label: 'Chat', icon: MessageSquare, allowedRoles: ['admin', 'member'] },
+  { href: '/linkboard', label: 'Link Board', icon: LinkIcon, allowedRoles: ['admin', 'member', 'parent'] },
 ];
 
 function UserMenu({ user }: { user: User }) {
@@ -104,8 +103,9 @@ function MainNav({ user }: { user: User }) {
     <SidebarMenu>
       {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href}>
+            <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
+                asChild
                 isActive={pathname.startsWith(item.href)}
                 tooltip={item.label}
                 >
@@ -119,8 +119,9 @@ function MainNav({ user }: { user: User }) {
 
       {user.role === 'admin' && (
         <SidebarMenuItem>
-            <Link href="/admin">
+            <Link href="/admin" passHref legacyBehavior>
                 <SidebarMenuButton
+                    asChild
                     isActive={pathname.startsWith('/admin')}
                     tooltip="Admin Settings"
                 >

@@ -69,9 +69,18 @@ export interface AppSettings {
     dashboardBannerUrl: string;
 }
 
-export interface ChatMessage {
-  id: number;
-  author: string;
-  text: string;
-  timestamp: string;
+export interface LinkRating {
+    userId: number;
+    rating: number;
+}
+
+export interface Link {
+    id: number;
+    url: string;
+    title: string;
+    description: string;
+    tripId?: number;
+    createdBy: string;
+    createdAt: string;
+    ratings: LinkRating[];
 }
