@@ -23,8 +23,17 @@ export async function getUsers(): Promise<User[]> {
 }
 
 export async function getEvents(): Promise<Event[]> {
-  // In a real app, this would fetch from an API endpoint
-  return [];
+  try {
+    // In a real app, this would be its own API endpoint.
+    // For now, we are re-using the server-side action via a temp API route
+    // if we had one. But since we don't, we'll just return empty.
+    // This is not ideal but works for now.
+    // A proper solution would be a dedicated GET /api/events endpoint.
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch events:", error);
+    return [];
+  }
 }
 
 export async function getTrips(): Promise<Trip[]> {

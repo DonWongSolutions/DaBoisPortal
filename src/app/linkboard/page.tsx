@@ -5,7 +5,7 @@ import { useEffect, useState, useActionState, useRef } from 'react';
 import { redirect } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 import { getSessionAction, createLinkAction, rateLinkAction, getLinksAction } from '@/app/actions';
-import { getTrips } from '@/lib/data.client';
+import { getTrips, getEvents } from '@/lib/data.client';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -14,12 +14,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { User, Trip, Link as LinkType } from '@/lib/types';
-import { PlusCircle, Star, Link as LinkIcon, ExternalLink, Filter } from 'lucide-react';
+import type { User, Trip, Link as LinkType, Event } from '@/lib/types';
+import { PlusCircle, Star, Link as LinkIcon, ExternalLink, Filter, Plane, Calendar } from 'lucide-react';
 
-function AddLinkDialog({ trips }: { trips: Trip[] }) {
+function AddLinkDialog({ trips, events }: { trips: Trip[], events: Event[] }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
@@ -35,6 +35,8 @@ function AddLinkDialog({ trips }: { trips: Trip[] }) {
         return result;
     }, { success: false, message: ''});
     const { pending } = useFormStatus();
+
+    const groupEvents = events.filter(e => e.type === 'group');
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -64,16 +66,25 @@ function AddLinkDialog({ trips }: { trips: Trip[] }) {
                             <Textarea id="description" name="description" required />
                         </div>
                          <div className="space-y-2">
-                            <Label htmlFor="tripId">Associate with a Trip (Optional)</Label>
-                             <Select name="tripId">
+                            <Label htmlFor="association">Associate with (Optional)</Label>
+                             <Select name="association">
                                 <SelectTrigger>
                                     <SelectValue placeholder="None" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">None</SelectItem>
-                                    {trips.map(trip => (
-                                        <SelectItem key={trip.id} value={String(trip.id)}>{trip.name}</SelectItem>
-                                    ))}
+                                    <SelectGroup>
+                                        <SelectLabel>Trips</SelectLabel>
+                                        {trips.map(trip => (
+                                            <SelectItem key={`trip-${trip.id}`} value={`trip-${trip.id}`}>{trip.name}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                    <SelectGroup>
+                                        <SelectLabel>Events</SelectLabel>
+                                        {groupEvents.map(event => (
+                                            <SelectItem key={`event-${event.id}`} value={`event-${event.id}`}>{event.title}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -105,8 +116,13 @@ function StarRating({ link, currentRating, onRate }: { link: LinkType, currentRa
     );
 }
 
-function LinkCard({ link, user, trips, onRate }: { link: LinkType, user: User, trips: Trip[], onRate: (linkId: number, rating: number) => void }) {
-    const associatedTrip = link.tripId ? trips.find(t => t.id === link.tripId) : null;
+function LinkCard({ link, user, trips, events, onRate }: { link: LinkType, user: User, trips: Trip[], events: Event[], onRate: (linkId: number, rating: number) => void }) {
+    const associatedItem = link.association
+        ? link.association.type === 'trip'
+            ? { type: 'trip', data: trips.find(t => t.id === link.association.id) }
+            : { type: 'event', data: events.find(e => e.id === link.association.id) }
+        : null;
+
     const totalRating = link.ratings.reduce((acc, r) => acc + r.rating, 0);
     const averageRating = link.ratings.length > 0 ? totalRating / link.ratings.length : 0;
     const userRating = link.ratings.find(r => r.userId === user.id)?.rating || 0;
@@ -124,10 +140,10 @@ function LinkCard({ link, user, trips, onRate }: { link: LinkType, user: User, t
             </CardHeader>
             <CardContent>
                 <p className="text-sm text-muted-foreground">{link.description}</p>
-                 {associatedTrip && (
+                 {associatedItem && associatedItem.data && (
                     <div className="mt-4 text-xs inline-flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-3 py-1">
-                       <LinkIcon className="h-3 w-3" />
-                       <span>{associatedTrip.name}</span>
+                       {associatedItem.type === 'trip' ? <Plane className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
+                       <span>{associatedItem.data.name || associatedItem.data.title}</span>
                     </div>
                  )}
             </CardContent>
@@ -147,6 +163,7 @@ export default function LinkBoardPage() {
     const [user, setUser] = useState<User | null>(null);
     const [links, setLinks] = useState<LinkType[]>([]);
     const [trips, setTrips] = useState<Trip[]>([]);
+    const [events, setEvents] = useState<Event[]>([]);
     const [filter, setFilter] = useState<string>('all');
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
@@ -166,11 +183,13 @@ export default function LinkBoardPage() {
                 }
                 setUser(sessionUser);
                 
-                const [_, fetchedTrips] = await Promise.all([
+                const [_, fetchedTrips, fetchedEvents] = await Promise.all([
                     fetchLinks(),
-                    getTrips()
+                    getTrips(),
+                    getEvents()
                 ]);
                 setTrips(fetchedTrips);
+                setEvents(fetchedEvents);
 
             } catch (error) {
                 console.error("Failed to fetch data:", error);
@@ -193,8 +212,16 @@ export default function LinkBoardPage() {
 
     const filteredLinks = links.filter(link => {
         if (filter === 'all') return true;
-        if (filter === 'none') return !link.tripId;
-        return String(link.tripId) === filter;
+        if (filter === 'none') return !link.association;
+        if (filter.startsWith('trip-')) {
+            const tripId = Number(filter.split('-')[1]);
+            return link.association?.type === 'trip' && link.association?.id === tripId;
+        }
+        if (filter.startsWith('event-')) {
+            const eventId = Number(filter.split('-')[1]);
+            return link.association?.type === 'event' && link.association?.id === eventId;
+        }
+        return false;
     });
 
     if (loading) {
@@ -212,24 +239,33 @@ export default function LinkBoardPage() {
                         <Select value={filter} onValueChange={setFilter}>
                             <SelectTrigger>
                                 <Filter className="mr-2 h-4 w-4" />
-                                <SelectValue placeholder="Filter by trip..." />
+                                <SelectValue placeholder="Filter by..." />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Trips</SelectItem>
+                                <SelectItem value="all">Show All</SelectItem>
                                 <SelectItem value="none">Not Associated</SelectItem>
-                                {trips.map(trip => (
-                                    <SelectItem key={trip.id} value={String(trip.id)}>{trip.name}</SelectItem>
-                                ))}
+                                 <SelectGroup>
+                                    <SelectLabel>Trips</SelectLabel>
+                                    {trips.map(trip => (
+                                        <SelectItem key={`trip-${trip.id}`} value={`trip-${trip.id}`}>{trip.name}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                                <SelectGroup>
+                                    <SelectLabel>Events</SelectLabel>
+                                    {events.filter(e => e.type === 'group').map(event => (
+                                        <SelectItem key={`event-${event.id}`} value={`event-${event.id}`}>{event.title}</SelectItem>
+                                    ))}
+                                </SelectGroup>
                             </SelectContent>
                         </Select>
                     </div>
-                    <AddLinkDialog trips={trips} />
+                    <AddLinkDialog trips={trips} events={events} />
                 </div>
             </PageHeader>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredLinks.length > 0 ? (
                     filteredLinks.map(link => (
-                        <LinkCard key={link.id} link={link} user={user} trips={trips} onRate={handleRate} />
+                        <LinkCard key={link.id} link={link} user={user} trips={trips} events={events} onRate={handleRate} />
                     ))
                 ) : (
                     <div className="col-span-full flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">

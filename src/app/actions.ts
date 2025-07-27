@@ -472,13 +472,23 @@ export async function createLinkAction(formData: FormData) {
     }
 
     try {
-        const tripIdValue = formData.get('tripId') as string;
+        const associationValue = formData.get('association') as string;
+        let association;
+
+        if (associationValue && associationValue !== 'none') {
+            const [type, id] = associationValue.split('-');
+            association = {
+                type: type as 'trip' | 'event',
+                id: Number(id)
+            };
+        }
+
         const newLink: LinkType = {
             id: Date.now(),
             url: formData.get('url') as string,
             title: formData.get('title') as string,
             description: formData.get('description') as string,
-            tripId: tripIdValue && tripIdValue !== 'none' ? Number(tripIdValue) : undefined,
+            association: association,
             createdBy: sessionUser.name,
             createdAt: new Date().toISOString(),
             ratings: [],
