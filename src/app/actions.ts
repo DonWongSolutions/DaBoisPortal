@@ -472,12 +472,13 @@ export async function createLinkAction(formData: FormData) {
     }
 
     try {
+        const tripIdValue = formData.get('tripId') as string;
         const newLink: LinkType = {
             id: Date.now(),
             url: formData.get('url') as string,
             title: formData.get('title') as string,
             description: formData.get('description') as string,
-            tripId: formData.get('tripId') ? Number(formData.get('tripId')) : undefined,
+            tripId: tripIdValue && tripIdValue !== 'none' ? Number(tripIdValue) : undefined,
             createdBy: sessionUser.name,
             createdAt: new Date().toISOString(),
             ratings: [],

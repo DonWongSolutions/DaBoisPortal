@@ -22,11 +22,13 @@ import { PlusCircle, Star, Link as LinkIcon, ExternalLink, Filter } from 'lucide
 function AddLinkDialog({ trips }: { trips: Trip[] }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         const result = await createLinkAction(formData);
         if (result.success) {
             toast({ title: 'Success', description: result.message });
             setOpen(false);
+            formRef.current?.reset();
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.message });
         }
@@ -43,7 +45,7 @@ function AddLinkDialog({ trips }: { trips: Trip[] }) {
                 </Button>
             </DialogTrigger>
             <DialogContent>
-                <form action={formAction}>
+                <form action={formAction} ref={formRef}>
                     <DialogHeader>
                         <DialogTitle>Add a New Link</DialogTitle>
                         <DialogDescription>Share a useful link with the group.</DialogDescription>
@@ -68,7 +70,7 @@ function AddLinkDialog({ trips }: { trips: Trip[] }) {
                                     <SelectValue placeholder="None" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">None</SelectItem>
+                                    <SelectItem value="none">None</SelectItem>
                                     {trips.map(trip => (
                                         <SelectItem key={trip.id} value={String(trip.id)}>{trip.name}</SelectItem>
                                     ))}
