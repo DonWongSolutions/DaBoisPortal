@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { redirect, useParams } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { getEvents } from '@/lib/data.client';
+import { getEvents as getEventsClient } from '@/lib/data.client';
 import { getSessionAction, updateEventAction } from '@/app/actions';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
@@ -32,16 +32,21 @@ export default function EditEventPage() {
     const [user, setUser] = useState<User | null>(null);
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
+    const [authorized, setAuthorized] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
             try {
                 const sessionUser = await getSessionAction();
-                if (!sessionUser || sessionUser.role !== 'admin') {
+                if (!sessionUser) {
                     redirect('/login');
                     return;
                 }
-                const allEvents = await getEvents();
+                setUser(sessionUser);
+
+                // We use a client-side fetch here because server-side `getEvents` is not available in client components
+                // and we need the event data to perform an authorization check before rendering the form.
+                const allEvents = await getEventsClient();
                 const currentEvent = allEvents.find(e => e.id === eventId);
                 
                 if (!currentEvent) {
@@ -49,10 +54,18 @@ export default function EditEventPage() {
                      return;
                 }
                 
-                setUser(sessionUser);
-                setEvent(currentEvent);
+                // Authorization check
+                if (sessionUser.role === 'admin' || sessionUser.name === currentEvent.createdBy) {
+                    setAuthorized(true);
+                    setEvent(currentEvent);
+                } else {
+                    // if not authorized, redirect
+                    redirect('/events');
+                }
+
             } catch (error) {
                 console.error("Failed to fetch data:", error);
+                 redirect('/events');
             } finally {
                 setLoading(false);
             }
@@ -64,12 +77,9 @@ export default function EditEventPage() {
         return <div>Loading...</div>;
     }
     
-    if (!user) {
+    if (!authorized || !event || !user) {
+        // This will show briefly before the redirect happens
         return <div>Redirecting...</div>
-    }
-
-    if (!event) {
-        return <div>Event not found.</div>;
     }
   
     const updateEventWithId = updateEventAction.bind(null, event.id);
@@ -99,15 +109,17 @@ export default function EditEventPage() {
                                 <Label htmlFor="description">Description</Label>
                                 <Textarea id="description" name="description" defaultValue={event.description} required />
                             </div>
-                            <div className="flex items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <Label htmlFor="isFamilyEvent" className="text-base">Family Event</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Is this event open to family members?
-                                    </p>
+                           {event.type === 'group' && (
+                                <div className="flex items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="isFamilyEvent" className="text-base">Family Event</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            Is this event open to family members?
+                                        </p>
+                                    </div>
+                                    <Switch id="isFamilyEvent" name="isFamilyEvent" defaultChecked={event.isFamilyEvent} />
                                 </div>
-                                <Switch id="isFamilyEvent" name="isFamilyEvent" defaultChecked={event.isFamilyEvent} />
-                            </div>
+                            )}
                         </CardContent>
                         <CardFooter>
                             <SubmitButton />

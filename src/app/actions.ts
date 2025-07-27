@@ -219,15 +219,17 @@ export async function createEventAction(formData: FormData) {
 
 export async function updateEventAction(eventId: number, formData: FormData) {
     const sessionUser = await getSession();
-    if (!sessionUser || sessionUser.role !== 'admin') {
-        redirect('/login');
-    }
+    if (!sessionUser) redirect('/login');
 
     const events = await getEvents();
     const eventIndex = events.findIndex(e => e.id === eventId);
-    if (eventIndex === -1) {
-        redirect('/events');
+    if (eventIndex === -1) redirect('/events');
+
+    const eventToUpdate = events[eventIndex];
+    if (sessionUser.role !== 'admin' && sessionUser.name !== eventToUpdate.createdBy) {
+         redirect('/events');
     }
+
 
     const updatedEvent: Partial<Event> = {
         title: formData.get('title') as string,
@@ -244,6 +246,32 @@ export async function updateEventAction(eventId: number, formData: FormData) {
     revalidatePath('/dashboard');
     revalidatePath('/schedule');
     redirect('/events');
+}
+
+export async function deleteEventAction(eventId: number) {
+    const sessionUser = await getSession();
+    if (!sessionUser) {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    const events = await getEvents();
+    const eventToDelete = events.find(e => e.id === eventId);
+    
+    if (!eventToDelete) {
+        return { success: false, message: 'Event not found.' };
+    }
+
+    if (sessionUser.role !== 'admin' && sessionUser.name !== eventToDelete.createdBy) {
+        return { success: false, message: 'You are not authorized to delete this event.' };
+    }
+
+    const updatedEvents = events.filter(e => e.id !== eventId);
+    await saveEvents(updatedEvents);
+
+    revalidatePath('/events');
+    revalidatePath('/dashboard');
+    revalidatePath('/schedule');
+    return { success: true, message: 'Event deleted successfully.' };
 }
 
 

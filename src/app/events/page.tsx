@@ -1,17 +1,22 @@
 
-import { redirect } from 'next/navigation';
+'use client';
+
 import Link from 'next/link';
-import { getSession } from '@/lib/auth';
-import { getEvents } from '@/lib/data';
+import { useEffect, useState } from 'react';
+import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, PlusCircle, Users, User, CheckCircle, XCircle, HelpCircle, MoreHorizontal, Lightbulb, UserX, Plane } from 'lucide-react';
+import { Pencil, PlusCircle, Users, User, CheckCircle, XCircle, HelpCircle, MoreHorizontal, Lightbulb, UserX, Plane, Trash2 } from 'lucide-react';
 import type { Event, User as TUser, UserAvailability } from '@/lib/types';
 import { EventResponseForm, ImportCalendarForm, SuggestionForm } from './event-actions';
 import { Separator } from '@/components/ui/separator';
+import { getSessionAction, deleteEventAction } from '@/app/actions';
+import { getEvents as getEventsClient } from '@/lib/data.client';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 function AvailabilityBadge({ status }: { status: UserAvailability }) {
     const statusMap = {
@@ -24,12 +29,13 @@ function AvailabilityBadge({ status }: { status: UserAvailability }) {
     return <Icon className={`h-5 w-5 ${color}`} title={label} />;
 }
 
-function EventCard({ event, user }: { event: Event, user: TUser }) {
+function EventCard({ event, user, onDelete }: { event: Event, user: TUser, onDelete: (eventId: number) => void }) {
     const eventDate = new Date(event.date);
     const now = new Date();
     eventDate.setHours(0,0,0,0);
     now.setHours(0,0,0,0);
     const isPast = eventDate < now;
+    const canManage = user.role === 'admin' || user.name === event.createdBy;
     
     let badge;
     if (event.tripId) {
@@ -102,30 +108,101 @@ function EventCard({ event, user }: { event: Event, user: TUser }) {
                         </Link>
                     </Button>
                )}
-
-                {user.role === 'admin' && event.type === 'group' && (
-                     <Button variant="outline" size="sm" asChild className="w-full mt-2">
-                        <Link href={`/events/${event.id}/edit`}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit Event
-                        </Link>
-                    </Button>
+               
+                {canManage && event.type === 'group' && (
+                     <div className="flex w-full gap-2 mt-2">
+                        <Button variant="outline" size="sm" asChild className="w-full">
+                            <Link href={`/events/${event.id}/edit`}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit Event
+                            </Link>
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" className="w-full">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will permanently delete the event "{event.title}". This action cannot be undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => onDelete(event.id)}>
+                                        Yes, delete event
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                     </div>
                 )}
             </CardFooter>
         </Card>
     )
 }
 
-export default async function EventsPage() {
-  const user = await getSession();
-  if (!user) {
-    redirect('/login');
-  }
-  const events = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const userVisibleEvents = events.filter(event => 
-      event.type === 'group' || (event.type === 'personal' && event.createdBy === user.name)
-  );
+export default function EventsPage() {
+    const [user, setUser] = useState<TUser | null>(null);
+    const [events, setEvents] = useState<Event[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
 
+    async function fetchEventsAndSession() {
+        try {
+            const sessionUser = await getSessionAction();
+            if (!sessionUser) {
+                redirect('/login');
+                return;
+            }
+            setUser(sessionUser);
+
+            const allEvents = await getEventsClient();
+            const userVisibleEvents = allEvents.filter(event => 
+                event.type === 'group' || (event.type === 'personal' && event.createdBy === sessionUser.name)
+            ).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setEvents(userVisibleEvents);
+
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        fetchEventsAndSession();
+    }, []);
+
+    const handleDelete = async (eventId: number) => {
+        const result = await deleteEventAction(eventId);
+        if (result.success) {
+            toast({
+                title: "Success",
+                description: result.message,
+            });
+            // Re-fetch events to update the list
+            fetchEventsAndSession();
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.message,
+            });
+        }
+    }
+
+  if (loading) {
+      return <div>Loading...</div>;
+  }
+  
+  if (!user) {
+      return <div>Redirecting...</div>
+  }
 
   return (
     <AppShell user={user}>
@@ -146,10 +223,10 @@ export default async function EventsPage() {
         )}
       </PageHeader>
       
-      {userVisibleEvents.length > 0 ? (
+      {events.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {userVisibleEvents.map(event => (
-              <EventCard key={event.id} event={event} user={user} />
+          {events.map(event => (
+              <EventCard key={event.id} event={event} user={user} onDelete={handleDelete} />
           ))}
         </div>
       ) : (

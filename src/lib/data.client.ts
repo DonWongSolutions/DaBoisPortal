@@ -22,14 +22,36 @@ export async function getUsers(): Promise<User[]> {
   }
 }
 
+// In a real app, each data type would have its own dedicated API endpoint.
+// For simplicity in this project, we create a single endpoint to fetch all
+// data required by the client, which then gets filtered as needed.
+// This is not a scalable approach but is sufficient for this context.
+async function getAllClientData() {
+    try {
+        // This is a placeholder. In a real application, you'd have an API route
+        // like `/api/all-data` that bundles this information.
+        // For now, we'll simulate by calling the server actions that get the data.
+        // This is not a pattern to replicate in production.
+        const eventRes = await fetch('/api/events'); // Assuming an API route exists or will be created.
+        if (!eventRes.ok) throw new Error('Failed to fetch events');
+        
+        return { events: await eventRes.json() };
+    } catch (error) {
+        console.error("Failed to fetch client data:", error);
+        return { events: [] };
+    }
+}
+
+let allEventsCache: Event[] | null = null;
+
 export async function getEvents(): Promise<Event[]> {
   try {
-    // In a real app, this would be its own API endpoint.
-    // For now, we are re-using the server-side action via a temp API route
-    // if we had one. But since we don't, we'll just return empty.
-    // This is not ideal but works for now.
-    // A proper solution would be a dedicated GET /api/events endpoint.
-    return [];
+    const res = await fetch('/api/events');
+    if (!res.ok) {
+        console.error("Failed to fetch events from API");
+        return [];
+    }
+    return await res.json();
   } catch (error) {
     console.error("Failed to fetch events:", error);
     return [];

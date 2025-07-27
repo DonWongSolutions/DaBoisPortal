@@ -27,5 +27,21 @@
       "Xavier": "pending",
       "Nathan": "pending"
     }
+  },
+  {
+    "id": 1753643066348,
+    "tripId": 1753413530822,
+    "title": "Shenzhen Test",
+    "date": "2026-07-25",
+    "description": "This event is for the trip to Shzhen. Please RSVP.",
+    "isFamilyEvent": true,
+    "type": "group",
+    "createdBy": "Don",
+    "responses": {
+      "Don": "pending",
+      "Isaac": "pending",
+      "Xavier": "pending",
+      "Nathan": "pending"
+    }
   }
 ]
