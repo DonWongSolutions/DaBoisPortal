@@ -223,7 +223,7 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
                              </AccordionTrigger>
                              <AccordionContent className="p-6 pt-0">
                                 {trip.itinerary.length > 0 ? (
-                                    <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {trip.itinerary.map((day, index) => (
                                             <div key={index}>
                                                 <h3 className="font-semibold text-lg mb-4 border-b pb-2">{formatDate(day.day)}</h3>
@@ -332,5 +332,7 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
         </AppShell>
     );
 }
+
+    
 
     
