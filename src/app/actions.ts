@@ -4,8 +4,8 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
-import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, getChatMessages, saveChatMessages, saveUsers, getWikiContent, saveWikiContent } from '@/lib/data';
-import type { AppSettings, Event, Trip, UserAvailability, ChatMessage, User, WikiPage } from '@/lib/types';
+import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, getChatMessages, saveChatMessages, saveUsers } from '@/lib/data';
+import type { AppSettings, Event, Trip, UserAvailability, ChatMessage, User } from '@/lib/types';
 import * as ical from 'node-ical';
 
 
@@ -489,77 +489,5 @@ export async function clearChatAction() {
         return { success: true, message: "Chat history cleared." };
     } catch(e) {
         return { success: false, message: "Failed to clear chat history." };
-    }
-}
-
-export async function saveWikiPageAction(slug: string, formData: FormData) {
-    const sessionUser = await getSession();
-    const editableRoles: Array<User['role']> = ['admin', 'member'];
-    
-    if (!sessionUser || !editableRoles.includes(sessionUser.role) || sessionUser.name === 'Parents') {
-        return { success: false, message: 'Unauthorized: You do not have permission to edit this page.' };
-    }
-
-    try {
-        const title = formData.get('title') as string;
-        const content = formData.get('content') as string;
-        const wikiPages = await getWikiContent();
-        
-        const pageIndex = wikiPages.findIndex(p => p.slug === slug);
-        if (pageIndex === -1) {
-            return { success: false, message: 'Page not found.' };
-        }
-
-        wikiPages[pageIndex].title = title;
-        wikiPages[pageIndex].content = content;
-
-        await saveWikiContent(wikiPages);
-        revalidatePath(`/wiki`, 'layout');
-        return { success: true, message: 'Wiki page saved successfully.' };
-    } catch(e) {
-        return { success: false, message: 'Failed to save wiki content.' };
-    }
-}
-
-export async function createWikiPageAction(formData: FormData) {
-    const sessionUser = await getSession();
-    const editableRoles: Array<User['role']> = ['admin', 'member'];
-    
-    if (!sessionUser || !editableRoles.includes(sessionUser.role) || sessionUser.name === 'Parents') {
-        return { success: false, message: 'Unauthorized' };
-    }
-
-    try {
-        const title = formData.get('title') as string;
-        let slug = (formData.get('slug') as string)
-            .toLowerCase()
-            .trim()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/[\s_-]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-
-        if (!title || !slug) {
-            return { success: false, message: 'Title and slug are required.'};
-        }
-
-        const wikiPages = await getWikiContent();
-
-        if (wikiPages.some(p => p.slug === slug)) {
-            return { success: false, message: 'This slug is already in use. Please choose another one.'};
-        }
-
-        const newPage: WikiPage = {
-            slug,
-            title,
-            content: `<h1>${title}</h1><p>Start writing your content here.</p>`
-        };
-        
-        wikiPages.push(newPage);
-        await saveWikiContent(wikiPages);
-        
-        revalidatePath(`/wiki`, 'layout');
-        return { success: true, slug: slug };
-    } catch(e) {
-        return { success: false, message: 'Failed to create wiki page.' };
     }
 }

@@ -5,7 +5,7 @@
 // This file contains client-safe versions of data-fetching functions.
 // They are intended to be used in client components.
 
-import type { User, Event, Trip, AppSettings, WikiPage } from './types';
+import type { User, Event, Trip, AppSettings } from './types';
 
 // Since we cannot access the filesystem on the client, these functions
 // would typically fetch data from an API route.
@@ -37,9 +37,4 @@ export async function getSettings(): Promise<AppSettings> {
     };
     // In a real app, this would fetch from an API endpoint
     return defaultSettings;
-}
-
-export async function getWikiContent(): Promise<WikiPage[]> {
-    const defaultContent: WikiPage[] = [];
-    return defaultContent;
 }

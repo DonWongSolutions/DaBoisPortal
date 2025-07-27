@@ -3,7 +3,7 @@
 import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
-import type { User, Event, Trip, AppSettings, ChatMessage, WikiContent } from './types';
+import type { User, Event, Trip, AppSettings, ChatMessage } from './types';
 
 const dataPath = path.join(process.cwd(), 'data');
 
@@ -141,17 +141,4 @@ export async function getChatMessages(): Promise<ChatMessage[]> {
 
 export async function saveChatMessages(messages: ChatMessage[]): Promise<void> {
     await writeJsonFile('chat.json', messages);
-}
-
-export async function getWikiContent(): Promise<WikiContent> {
-    const defaultContent: WikiContent = [{
-        slug: "welcome",
-        title: "Welcome to the Wiki!",
-        content: "<h1>Welcome to the Wiki!</h1><p>This is a publicly accessible wiki page. Only members can edit this page.</p>"
-    }];
-    return readJsonFile<WikiContent>('wiki.json', defaultContent);
-}
-
-export async function saveWikiContent(content: WikiContent): Promise<void> {
-    await writeJsonFile('wiki.json', content);
 }

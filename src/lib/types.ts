@@ -75,9 +75,3 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
 }
-
-export interface WikiPage {
-  slug: string;
-  title: string;
-  content: string;
-}

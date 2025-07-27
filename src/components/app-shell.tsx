@@ -48,7 +48,6 @@ const navItems = [
   { href: '/schedule', label: 'Schedule', icon: CalendarCheck, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/trips', label: 'Trip Planner', icon: Plane, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/chat', label: 'Chat', icon: MessageSquare, allowedRoles: ['admin', 'member'] },
-  { href: '/wiki', label: 'Wiki', icon: BookOpen, allowedRoles: ['admin', 'member', 'parent'] },
 ];
 
 function UserMenu({ user }: { user: User }) {

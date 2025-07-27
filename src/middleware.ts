@@ -4,20 +4,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin'];
-const memberOnlyRoutes = ['/profile', '/wiki/new', '/wiki/edit'];
+const memberOnlyRoutes = ['/profile'];
 const authRoutes = ['/login'];
-const publicRoutes = ['/wiki'];
 
 export function middleware(request: NextRequest) {
   const session = request.cookies.get('da_bois_session')?.value;
   const { pathname } = request.nextUrl;
 
-  const isPublicWikiRoute = pathname.startsWith('/wiki') && !pathname.includes('/edit') && !pathname.includes('/new');
-
-  // Allow public access to wiki pages, but not edit/new
-  if (isPublicWikiRoute) {
-    return NextResponse.next();
-  }
 
   // If user is trying to access a protected route without a session, redirect to login
   if (!session && (protectedRoutes.some(route => pathname.startsWith(route)) || memberOnlyRoutes.some(route => pathname.startsWith(route)))) {
