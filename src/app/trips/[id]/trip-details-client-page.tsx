@@ -18,6 +18,7 @@ import type { Trip, User, ItineraryActivity } from '@/lib/types';
 import { useFormStatus } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 function AddItineraryForm({ trip }: { trip: Trip }) {
     const { toast } = useToast();
@@ -214,80 +215,81 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
             />
 
             <div className="grid gap-8 lg:grid-cols-3">
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Itinerary */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Plane className="h-5 w-5" /> Itinerary</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {trip.itinerary.length > 0 ? (
-                                <div className="space-y-6">
-                                    {trip.itinerary.map((day, index) => (
-                                        <div key={index}>
-                                            <h3 className="font-semibold text-lg mb-4 border-b pb-2">{formatDate(day.day)}</h3>
-                                            <div className="relative overflow-y-auto max-h-[600px] pr-2">
-                                              <DayScheduleView activities={day.activities} />
+                <div className="lg:col-span-2 space-y-4">
+                    <Accordion type="multiple" className="w-full space-y-4">
+                        <AccordionItem value="itinerary" className="border rounded-lg bg-card">
+                             <AccordionTrigger className="p-6">
+                                <CardTitle className="flex items-center gap-2 text-xl"><Plane className="h-5 w-5" /> Itinerary</CardTitle>
+                             </AccordionTrigger>
+                             <AccordionContent className="p-6 pt-0">
+                                {trip.itinerary.length > 0 ? (
+                                    <div className="space-y-6">
+                                        {trip.itinerary.map((day, index) => (
+                                            <div key={index}>
+                                                <h3 className="font-semibold text-lg mb-4 border-b pb-2">{formatDate(day.day)}</h3>
+                                                <div className="relative overflow-y-auto max-h-[600px] pr-2">
+                                                <DayScheduleView activities={day.activities} />
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (<p className="text-muted-foreground text-center py-8">No itinerary items yet. Add one to get started!</p>)}
-                        </CardContent>
-                    </Card>
-                     {/* Costs */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Costs</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                             {trip.costs.length > 0 ? (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Item</TableHead>
-                                            <TableHead>Paid By</TableHead>
-                                            <TableHead className="text-right">Amount</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {trip.costs.map(cost => (
-                                            <TableRow key={cost.id}>
-                                                <TableCell>{cost.item}</TableCell>
-                                                <TableCell>{cost.paidBy}</TableCell>
-                                                <TableCell className="text-right font-mono">${cost.amount.toFixed(2)}</TableCell>
-                                            </TableRow>
                                         ))}
-                                    </TableBody>
-                                </Table>
-                             ) : (<p className="text-muted-foreground text-center py-8">No costs logged yet.</p>)}
-                        </CardContent>
-                        {trip.costs.length > 0 && (
-                             <CardFooter className="flex justify-end gap-8 bg-muted/50 p-4 rounded-b-lg">
-                                <div className="text-right">
-                                    <p className="text-sm text-muted-foreground">Total Cost</p>
-                                    <p className="text-lg font-bold">${totalCost.toFixed(2)}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm text-muted-foreground">Cost Per Person</p>
-                                    <p className="text-lg font-bold">${costPerPerson.toFixed(2)}</p>
-                                </div>
-                             </CardFooter>
-                        )}
-                    </Card>
-                    {/* Suggestions */}
-                    {trip.suggestions && trip.suggestions.length > 0 && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><Lightbulb className="h-5 w-5" /> Suggestions</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                                {trip.suggestions.map((s, i) => (
-                                     <p key={i} className="text-sm text-muted-foreground"><strong>{s.suggestedBy}:</strong> {s.suggestion}</p>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    )}
+                                    </div>
+                                ) : (<p className="text-muted-foreground text-center py-8">No itinerary items yet. Add one to get started!</p>)}
+                             </AccordionContent>
+                        </AccordionItem>
+                        
+                         <AccordionItem value="costs" className="border rounded-lg bg-card">
+                            <AccordionTrigger className="p-6">
+                               <CardTitle className="flex items-center gap-2 text-xl"><DollarSign className="h-5 w-5" /> Costs</CardTitle>
+                            </AccordionTrigger>
+                            <AccordionContent className="p-6 pt-0">
+                                {trip.costs.length > 0 ? (
+                                    <>
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Item</TableHead>
+                                                    <TableHead>Paid By</TableHead>
+                                                    <TableHead className="text-right">Amount</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {trip.costs.map(cost => (
+                                                    <TableRow key={cost.id}>
+                                                        <TableCell>{cost.item}</TableCell>
+                                                        <TableCell>{cost.paidBy}</TableCell>
+                                                        <TableCell className="text-right font-mono">${cost.amount.toFixed(2)}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                        <CardFooter className="flex justify-end gap-8 bg-muted/50 p-4 rounded-b-lg mt-4">
+                                            <div className="text-right">
+                                                <p className="text-sm text-muted-foreground">Total Cost</p>
+                                                <p className="text-lg font-bold">${totalCost.toFixed(2)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm text-muted-foreground">Cost Per Person</p>
+                                                <p className="text-lg font-bold">${costPerPerson.toFixed(2)}</p>
+                                            </div>
+                                        </CardFooter>
+                                    </>
+                                ) : (<p className="text-muted-foreground text-center py-8">No costs logged yet.</p>)}
+                            </AccordionContent>
+                         </AccordionItem>
+
+                         {trip.suggestions && trip.suggestions.length > 0 && (
+                             <AccordionItem value="suggestions" className="border rounded-lg bg-card">
+                                 <AccordionTrigger className="p-6">
+                                    <CardTitle className="flex items-center gap-2 text-xl"><Lightbulb className="h-5 w-5" /> Suggestions</CardTitle>
+                                 </AccordionTrigger>
+                                 <AccordionContent className="p-6 pt-0 space-y-2">
+                                    {trip.suggestions.map((s, i) => (
+                                         <p key={i} className="text-sm text-muted-foreground"><strong>{s.suggestedBy}:</strong> {s.suggestion}</p>
+                                    ))}
+                                 </AccordionContent>
+                             </AccordionItem>
+                         )}
+                    </Accordion>
                 </div>
                 <div className="lg:col-span-1 space-y-8">
                      {/* Trip Info */}
@@ -330,3 +332,5 @@ export function TripDetailsClientPage({ user, trip, allUsers }: { user: User; tr
         </AppShell>
     );
 }
+
+    
