@@ -103,14 +103,15 @@ function MainNav({ user }: { user: User }) {
     <SidebarMenu>
       {filteredNavItems.map((item) => (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href} passHref legacyBehavior>
+            <Link href={item.href}>
                 <SidebarMenuButton
-                asChild
-                isActive={pathname.startsWith(item.href)}
-                tooltip={item.label}
+                  isActive={pathname.startsWith(item.href)}
+                  tooltip={item.label}
                 >
+                  <>
                     <item.icon className="h-5 w-5" />
                     <span>{item.label}</span>
+                  </>
                 </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -119,14 +120,15 @@ function MainNav({ user }: { user: User }) {
 
       {user.role === 'admin' && (
         <SidebarMenuItem>
-            <Link href="/admin" passHref legacyBehavior>
+            <Link href="/admin">
                 <SidebarMenuButton
-                    asChild
                     isActive={pathname.startsWith('/admin')}
                     tooltip="Admin Settings"
                 >
+                   <>
                     <Settings className="h-5 w-5" />
                     <span>Admin Settings</span>
+                   </>
                 </SidebarMenuButton>
             </Link>
         </SidebarMenuItem>
