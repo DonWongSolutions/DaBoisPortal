@@ -74,17 +74,12 @@ export interface LinkRating {
     rating: number;
 }
 
-export interface LinkAssociation {
-    type: 'trip' | 'event';
-    id: number;
-}
-
 export interface Link {
     id: number;
     url: string;
     title: string;
     description: string;
-    association?: LinkAssociation;
+    tags?: string[];
     createdBy: string;
     createdAt: string;
     ratings: LinkRating[];
