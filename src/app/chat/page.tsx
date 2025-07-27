@@ -145,55 +145,57 @@ export default function ChatPage() {
 
     return (
         <AppShell user={user}>
-            <PageHeader title="Secure Chat" description="Real-time chat for members.">
-                {user.role === 'admin' && <ChatAdminButtons />}
-            </PageHeader>
-            <div className="flex flex-col h-[calc(100vh-250px)]">
-                 <Card className="flex-1 flex flex-col">
-                    <CardContent className="flex-1 p-6 flex flex-col">
-                       <ScrollArea className="flex-1 h-full" ref={viewportRef}>
-                            <div className="space-y-4 pr-4">
-                                {messages.map(msg => (
-                                     <div key={msg.id} className={`flex items-start gap-3 ${msg.author === user.name ? 'justify-end' : ''}`}>
-                                        {msg.author !== user.name && (
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={''} data-ai-hint="user avatar" />
-                                                <AvatarFallback>{msg.author.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                        )}
-                                        <div className={`flex flex-col ${msg.author === user.name ? 'items-end' : 'items-start'}`}>
-                                            <div className={`rounded-lg px-4 py-2 max-w-sm ${msg.author === user.name ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                               <p className="text-sm">{msg.text}</p>
+            <div className="flex flex-col h-full">
+                <PageHeader title="Secure Chat" description="Real-time chat for members.">
+                    {user.role === 'admin' && <ChatAdminButtons />}
+                </PageHeader>
+                <div className="flex-1 flex flex-col min-h-0">
+                     <Card className="flex-1 flex flex-col">
+                        <CardContent className="flex-1 p-6 flex flex-col min-h-0">
+                           <ScrollArea className="flex-1" ref={viewportRef}>
+                                <div className="space-y-4 pr-4">
+                                    {messages.map(msg => (
+                                         <div key={msg.id} className={`flex items-start gap-3 ${msg.author === user.name ? 'justify-end' : ''}`}>
+                                            {msg.author !== user.name && (
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage src={''} data-ai-hint="user avatar" />
+                                                    <AvatarFallback>{msg.author.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                            )}
+                                            <div className={`flex flex-col ${msg.author === user.name ? 'items-end' : 'items-start'}`}>
+                                                <div className={`rounded-lg px-4 py-2 max-w-sm ${msg.author === user.name ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                                   <p className="text-sm">{msg.text}</p>
+                                                </div>
+                                                <span className="text-xs text-muted-foreground mt-1">
+                                                   {msg.author}, {format(new Date(msg.timestamp), "p")}
+                                                </span>
                                             </div>
-                                            <span className="text-xs text-muted-foreground mt-1">
-                                               {msg.author}, {format(new Date(msg.timestamp), "p")}
-                                            </span>
+                                             {msg.author === user.name && (
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage src={user.profilePictureUrl} data-ai-hint="user avatar" />
+                                                    <AvatarFallback>{msg.author.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                            )}
                                         </div>
-                                         {msg.author === user.name && (
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={user.profilePictureUrl} data-ai-hint="user avatar" />
-                                                <AvatarFallback>{msg.author.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                       </ScrollArea>
-                    </CardContent>
-                    <CardFooter className="p-4 border-t">
-                        <form 
-                            ref={formRef}
-                            action={async (formData) => {
-                                await sendChatMessageAction(formData);
-                                formRef.current?.reset();
-                            }} 
-                            className="flex w-full items-center gap-2"
-                        >
-                            <Input name="message" placeholder="Type your message..." autoComplete="off" />
-                            <SubmitButton />
-                        </form>
-                    </CardFooter>
-                 </Card>
+                                    ))}
+                                </div>
+                           </ScrollArea>
+                        </CardContent>
+                        <CardFooter className="p-4 border-t">
+                            <form 
+                                ref={formRef}
+                                action={async (formData) => {
+                                    await sendChatMessageAction(formData);
+                                    formRef.current?.reset();
+                                }} 
+                                className="flex w-full items-center gap-2"
+                            >
+                                <Input name="message" placeholder="Type your message..." autoComplete="off" />
+                                <SubmitButton />
+                            </form>
+                        </CardFooter>
+                     </Card>
+                </div>
             </div>
         </AppShell>
     );
