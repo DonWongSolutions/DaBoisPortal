@@ -1,10 +1,8 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getUsers } from '@/lib/data';
 
-const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin', '/chat', '/linkboard'];
-const memberOnlyRoutes = ['/profile'];
+const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin', '/chat', '/linkboard', '/profile'];
 const authRoutes = ['/login'];
 
 export async function middleware(request: NextRequest) {
@@ -13,29 +11,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // If user is trying to access a protected route without a session, redirect to login
-  if (!sessionUser && (protectedRoutes.some(route => pathname.startsWith(route)) || memberOnlyRoutes.some(route => pathname.startsWith(route)))) {
+  if (!sessionUser && protectedRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If user is authenticated
-  if (sessionUser) {
-    // If user is on an auth route, redirect to dashboard
-    if (authRoutes.some(route => pathname.startsWith(route))) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    
-    // Check for verification flags
-    const users = await getUsers();
-    const user = users.find(u => u.name === sessionUser);
-
-    if (user && (user.forceInfoUpdate || user.forcePasswordChange)) {
-      // If flags are set, they can only access the profile page
-      if (pathname !== '/profile') {
-        return NextResponse.redirect(new URL('/profile', request.url));
-      }
-    }
+  // If user is authenticated and tries to access an auth route, redirect to dashboard
+  if (sessionUser && authRoutes.some(route => pathname.startsWith(route))) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
-
 
   return NextResponse.next();
 }
