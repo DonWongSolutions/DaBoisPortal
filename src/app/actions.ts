@@ -167,7 +167,7 @@ export async function createEventAction(formData: FormData) {
     }
 
     const users = await getUsers();
-    const eventType = user.role === 'admin' ? formData.get('eventType') : 'personal';
+    const eventType = sessionUser.role === 'admin' ? formData.get('eventType') : 'personal';
 
     const events = await getEvents();
 
