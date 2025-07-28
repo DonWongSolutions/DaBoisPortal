@@ -4,8 +4,8 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
-import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, saveUsers, getLinks, saveLinks } from '@/lib/data';
-import type { AppSettings, Event, Trip, UserAvailability, User, Link as LinkType } from '@/lib/types';
+import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, saveUsers, getLinks, saveLinks, getChatMessages, saveChatMessages } from '@/lib/data';
+import type { AppSettings, Event, Trip, UserAvailability, User, Link as LinkType, ChatMessage } from '@/lib/types';
 import * as ical from 'node-ical';
 
 
@@ -111,11 +111,6 @@ export async function adminUpdateUserAction(userId: number, formData: FormData) 
     updatedUser.email = formData.get('email') as string;
     updatedUser.phone = formData.get('phone') as string;
     
-    const newPassword = formData.get('password') as string;
-    if (newPassword) {
-        updatedUser.password = newPassword;
-    }
-
     users[userIndex] = updatedUser;
     await saveUsers(users);
     
@@ -172,7 +167,7 @@ export async function createEventAction(formData: FormData) {
     }
 
     const users = await getUsers();
-    const eventType = sessionUser.role === 'admin' ? formData.get('eventType') : 'personal';
+    const eventType = user.role === 'admin' ? formData.get('eventType') : 'personal';
 
     const events = await getEvents();
 
@@ -696,6 +691,51 @@ export async function rateLinkAction(linkId: number, rating: number) {
 
 export async function getLinksAction() {
     return await getLinks();
+}
+
+export async function getChatMessagesAction() {
+    return await getChatMessages();
+}
+
+export async function sendChatMessageAction(formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser) {
+        return;
+    }
+
+    const messageText = formData.get('message') as string;
+    if (!messageText.trim()) {
+        return;
+    }
+    
+    const newMessage: ChatMessage = {
+        id: Date.now(),
+        author: sessionUser.name,
+        text: messageText,
+        timestamp: new Date().toISOString(),
+    };
+
+    const messages = await getChatMessages();
+    messages.push(newMessage);
+    await saveChatMessages(messages);
+
+    revalidatePath('/chat');
+}
+
+export async function exportChatAction() {
+    const messages = await getChatMessages();
+    return messages.map(msg => `[${new Date(msg.timestamp).toLocaleString()}] ${msg.author}: ${msg.text}`).join('\n');
+}
+
+export async function clearChatAction() {
+     const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    await saveChatMessages([]);
+    revalidatePath('/chat');
+    return { success: true, message: 'Chat history cleared successfully.' };
 }
 
 export async function getSessionAction() {

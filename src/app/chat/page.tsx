@@ -27,7 +27,7 @@ function SubmitButton() {
     )
 }
 
-function ChatAdminButtons() {
+function ChatAdminButtons({ onClear }: { onClear: () => void }) {
     const { toast } = useToast();
 
     const handleExport = async () => {
@@ -50,6 +50,7 @@ function ChatAdminButtons() {
                 title: "Success",
                 description: result.message,
             });
+            onClear();
         } else {
             toast({
                 variant: "destructive",
@@ -125,7 +126,9 @@ export default function ChatPage() {
             }
         }
         fetchSession();
+    }, []);
 
+    useEffect(() => {
         const interval = setInterval(fetchMessages, 3000); // Poll for new messages every 3 seconds
         return () => clearInterval(interval);
     }, []);
@@ -147,7 +150,7 @@ export default function ChatPage() {
         <AppShell user={user}>
             <div className="flex flex-col h-full">
                 <PageHeader title="Secure Chat" description="Real-time chat for members.">
-                    {user.role === 'admin' && <ChatAdminButtons />}
+                    {user.role === 'admin' && <ChatAdminButtons onClear={() => setMessages([])} />}
                 </PageHeader>
                 <div className="flex-1 flex flex-col min-h-0">
                      <Card className="flex-1 flex flex-col">
@@ -187,6 +190,7 @@ export default function ChatPage() {
                                 action={async (formData) => {
                                     await sendChatMessageAction(formData);
                                     formRef.current?.reset();
+                                    await fetchMessages(); // Re-fetch immediately after sending
                                 }} 
                                 className="flex w-full items-center gap-2"
                             >

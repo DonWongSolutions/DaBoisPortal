@@ -85,3 +85,10 @@ export interface Link {
     createdAt: string;
     ratings: LinkRating[];
 }
+
+export interface ChatMessage {
+    id: number;
+    author: string;
+    text: string;
+    timestamp: string;
+}

@@ -12,14 +12,19 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { updateSettingsAction, getSessionAction, adminUpdateUserAction } from '@/app/actions';
+import { updateSettingsAction, getSessionAction, adminUpdateUserAction, resetPasswordAction } from '@/app/actions';
 import type { User, AppSettings } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 
-function SettingsForm({ settings, onSettingsChange }: { settings: AppSettings, onSettingsChange: (newSettings: AppSettings) => void }) {
+function SettingsForm({ initialSettings, onSave }: { initialSettings: AppSettings, onSave: () => Promise<void> }) {
     const { toast } = useToast();
+    const [settings, setSettings] = useState(initialSettings);
+
+    useEffect(() => {
+        setSettings(initialSettings);
+    }, [initialSettings]);
     
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         const newSettings = {
@@ -33,7 +38,7 @@ function SettingsForm({ settings, onSettingsChange }: { settings: AppSettings, o
                 title: "Success",
                 description: result.message,
             });
-            onSettingsChange(newSettings);
+            await onSave();
         } else {
              toast({
                 variant: "destructive",
@@ -60,15 +65,15 @@ function SettingsForm({ settings, onSettingsChange }: { settings: AppSettings, o
                                 Temporarily disable access to the portal for non-admins.
                             </p>
                         </div>
-                        <Switch id="maintenance-mode" name="maintenanceMode" checked={settings.maintenanceMode} onCheckedChange={(checked) => onSettingsChange({...settings, maintenanceMode: checked})} />
+                        <Switch id="maintenance-mode" name="maintenanceMode" checked={settings.maintenanceMode} onCheckedChange={(checked) => setSettings({...settings, maintenanceMode: checked})} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="loginImageUrl">Login Page Image URL</Label>
-                        <Input id="loginImageUrl" name="loginImageUrl" value={settings.loginImageUrl} onChange={(e) => onSettingsChange({...settings, loginImageUrl: e.target.value})} />
+                        <Input id="loginImageUrl" name="loginImageUrl" value={settings.loginImageUrl} onChange={(e) => setSettings({...settings, loginImageUrl: e.target.value})} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="dashboardBannerUrl">Dashboard Banner Image URL</Label>
-                        <Input id="dashboardBannerUrl" name="dashboardBannerUrl" value={settings.dashboardBannerUrl} onChange={(e) => onSettingsChange({...settings, dashboardBannerUrl: e.target.value})} />
+                        <Input id="dashboardBannerUrl" name="dashboardBannerUrl" value={settings.dashboardBannerUrl} onChange={(e) => setSettings({...settings, dashboardBannerUrl: e.target.value})} />
                     </div>
                 </CardContent>
                 <CardFooter>
@@ -79,64 +84,74 @@ function SettingsForm({ settings, onSettingsChange }: { settings: AppSettings, o
     );
 }
 
-function EditUserDialog({ user, children }: { user: User, children: React.ReactNode }) {
+function EditUserDialog({ user, onUpdate }: { user: User, children: React.ReactNode, onUpdate: () => void }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
-    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+    
+    const [updateState, updateFormAction] = useActionState(async (prevState: any, formData: FormData) => {
         const result = await adminUpdateUserAction(user.id, formData);
         if (result.success) {
-            toast({
-                title: "Success",
-                description: result.message,
-            });
+            toast({ title: "Success", description: result.message });
+            onUpdate();
             setOpen(false);
         } else {
-             toast({
-                variant: "destructive",
-                title: "Error",
-                description: result.message,
-            });
+             toast({ variant: "destructive", title: "Error", description: result.message });
+        }
+        return result;
+    }, { success: false, message: ''});
+    
+     const [resetState, resetFormAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const result = await resetPasswordAction(user.id, formData);
+        if (result.success) {
+            toast({ title: "Success", description: result.message });
+            onUpdate();
+        } else {
+             toast({ variant: "destructive", title: "Error", description: result.message });
         }
         return result;
     }, { success: false, message: ''});
     
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogTrigger asChild><Button variant="outline" size="sm">Edit User</Button></DialogTrigger>
             <DialogContent>
-                <form action={formAction}>
-                    <DialogHeader>
-                        <DialogTitle>Edit User: {user.name}</DialogTitle>
-                        <DialogDescription>
-                            Update the user's details or reset their password.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email Address</Label>
-                            <Input id="email" name="email" type="email" defaultValue={user.email} required />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="phone">Phone Number</Label>
-                            <Input id="phone" name="phone" defaultValue={user.phone} required />
-                        </div>
-                        <Separator />
-                        <div>
-                             <Label htmlFor="password">New Password</Label>
-                             <p className="text-sm text-muted-foreground pb-2">Leave blank to keep the current password.</p>
-                             <Input id="password" name="password" type="password" />
-                        </div>
+                 <DialogHeader>
+                    <DialogTitle>Edit User: {user.name}</DialogTitle>
+                    <DialogDescription>
+                        Update the user's details or reset their password.
+                    </DialogDescription>
+                </DialogHeader>
+                <form action={updateFormAction} className="py-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input id="email" name="email" type="email" defaultValue={user.email} required />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input id="phone" name="phone" defaultValue={user.phone} required />
                     </div>
                     <DialogFooter>
                         <Button type="submit">Save Changes</Button>
                     </DialogFooter>
                 </form>
+                 <Separator />
+                <form action={resetFormAction} className="space-y-4">
+                     <div>
+                         <Label htmlFor="password">Reset Password</Label>
+                         <p className="text-sm text-muted-foreground pb-2">Enter a new password for the user.</p>
+                         <Input id="password" name="password" type="password" required />
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" variant="destructive">Reset Password</Button>
+                    </DialogFooter>
+                </form>
+
             </DialogContent>
         </Dialog>
     )
 }
 
-function UserManagement({ users, adminUser }: { users: User[], adminUser: User }) {
+function UserManagement({ users, adminUser, onUpdate }: { users: User[], adminUser: User, onUpdate: () => void }) {
     return (
         <Card>
             <CardHeader>
@@ -162,9 +177,7 @@ function UserManagement({ users, adminUser }: { users: User[], adminUser: User }
                                 <TableCell>{user.email}</TableCell>
                                 <TableCell>{user.phone}</TableCell>
                                 <TableCell className="text-right">
-                                    <EditUserDialog user={user}>
-                                        <Button variant="outline" size="sm">Edit User</Button>
-                                    </EditUserDialog>
+                                    <EditUserDialog user={user} onUpdate={onUpdate} />
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -182,31 +195,43 @@ export default function AdminPage() {
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        async function fetchData() {
-            setLoading(true);
-            try {
-                const sessionUser = await getSessionAction();
-                if (!sessionUser || sessionUser.role !== 'admin') {
-                    redirect('/dashboard');
-                    return;
-                }
-                const [appSettings, users] = await Promise.all([getSettings(), getUsers()]);
-                setUser(sessionUser);
-                setSettings(appSettings);
-                setAllUsers(users);
-            } catch (error) {
-                console.error("Failed to fetch data:", error);
-                redirect('/login');
-            } finally {
-                setLoading(false);
+    async function fetchData() {
+        setLoading(true);
+        try {
+            const sessionUser = await getSessionAction();
+            if (!sessionUser || sessionUser.role !== 'admin') {
+                redirect('/dashboard');
+                return;
             }
+            const [appSettings, users] = await Promise.all([getSettings(), getUsers()]);
+            setUser(sessionUser);
+            setSettings(appSettings);
+            setAllUsers(users);
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+            redirect('/login');
+        } finally {
+            setLoading(false);
         }
+    }
+
+    useEffect(() => {
         fetchData();
     }, []);
 
+    const handleDataUpdate = async () => {
+       try {
+            const [appSettings, users] = await Promise.all([getSettings(), getUsers()]);
+            setSettings(appSettings);
+            setAllUsers(users);
+        } catch (error) {
+            console.error("Failed to re-fetch data:", error);
+        }
+    }
+
+
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
 
     if (!user || !settings) {
@@ -220,9 +245,9 @@ export default function AdminPage() {
                 description="Manage the portal."
             />
             <div className="space-y-8 max-w-4xl mx-auto">
-                <SettingsForm settings={settings} onSettingsChange={setSettings} />
+                <SettingsForm initialSettings={settings} onSave={handleDataUpdate} />
                 <Separator />
-                <UserManagement users={allUsers} adminUser={user} />
+                <UserManagement users={allUsers} adminUser={user} onUpdate={handleDataUpdate} />
             </div>
         </AppShell>
     );
