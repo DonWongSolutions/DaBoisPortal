@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Wrench } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { Icons } from './icons';
 
@@ -30,7 +30,7 @@ function SubmitButton() {
   );
 }
 
-export function LoginForm({ users }: { users: User[] }) {
+export function LoginForm({ users, maintenanceMode }: { users: User[], maintenanceMode?: boolean }) {
   const initialState = { message: null };
   const [state, dispatch] = useActionState(loginAction, initialState);
 
@@ -44,6 +44,13 @@ export function LoginForm({ users }: { users: User[] }) {
         <CardDescription>Welcome back, please log in to continue</CardDescription>
       </CardHeader>
       <CardContent>
+        {maintenanceMode && (
+             <Alert variant="default" className="mb-4 bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400">
+                <Wrench className="h-4 w-4" />
+                <AlertTitle>Maintenance In Progress</AlertTitle>
+                <AlertDescription>Only administrators can log in at this time.</AlertDescription>
+            </Alert>
+        )}
         <form action={dispatch} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="name">Member</Label>

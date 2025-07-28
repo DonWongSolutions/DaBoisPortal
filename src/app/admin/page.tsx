@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 
-function SettingsForm({ settings }: { settings: AppSettings }) {
+function SettingsForm({ settings, onSettingsChange }: { settings: AppSettings, onSettingsChange: (newSettings: AppSettings) => void }) {
     const { toast } = useToast();
     
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
@@ -33,6 +33,7 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
                 title: "Success",
                 description: result.message,
             });
+            onSettingsChange(newSettings);
         } else {
              toast({
                 variant: "destructive",
@@ -59,15 +60,15 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
                                 Temporarily disable access to the portal for non-admins.
                             </p>
                         </div>
-                        <Switch id="maintenance-mode" name="maintenanceMode" defaultChecked={settings.maintenanceMode} />
+                        <Switch id="maintenance-mode" name="maintenanceMode" checked={settings.maintenanceMode} onCheckedChange={(checked) => onSettingsChange({...settings, maintenanceMode: checked})} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="loginImageUrl">Login Page Image URL</Label>
-                        <Input id="loginImageUrl" name="loginImageUrl" defaultValue={settings.loginImageUrl} />
+                        <Input id="loginImageUrl" name="loginImageUrl" value={settings.loginImageUrl} onChange={(e) => onSettingsChange({...settings, loginImageUrl: e.target.value})} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="dashboardBannerUrl">Dashboard Banner Image URL</Label>
-                        <Input id="dashboardBannerUrl" name="dashboardBannerUrl" defaultValue={settings.dashboardBannerUrl} />
+                        <Input id="dashboardBannerUrl" name="dashboardBannerUrl" value={settings.dashboardBannerUrl} onChange={(e) => onSettingsChange({...settings, dashboardBannerUrl: e.target.value})} />
                     </div>
                 </CardContent>
                 <CardFooter>
@@ -219,7 +220,7 @@ export default function AdminPage() {
                 description="Manage the portal."
             />
             <div className="space-y-8 max-w-4xl mx-auto">
-                <SettingsForm settings={settings} />
+                <SettingsForm settings={settings} onSettingsChange={setSettings} />
                 <Separator />
                 <UserManagement users={allUsers} adminUser={user} />
             </div>

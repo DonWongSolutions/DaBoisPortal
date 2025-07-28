@@ -7,6 +7,10 @@ export default async function LoginPage() {
   const users = await getUsers();
   const settings = await getSettings();
 
+  const displayedUsers = settings.maintenanceMode 
+    ? users.filter(u => u.role === 'admin') 
+    : users;
+
   return (
     <div className="relative min-h-screen w-full lg:grid lg:grid-cols-4">
       {/* Background Image for Mobile */}
@@ -24,7 +28,7 @@ export default async function LoginPage() {
       
       {/* Login Form Section */}
       <div className="relative flex items-center justify-center min-h-screen p-8 lg:col-span-1">
-        <LoginForm users={users} />
+        <LoginForm users={displayedUsers} maintenanceMode={settings.maintenanceMode} />
       </div>
 
       {/* Image Section for Desktop */}
