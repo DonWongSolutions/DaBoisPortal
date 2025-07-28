@@ -18,8 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 
-
-function EditUserDialog({ user, onUpdate }: { user: User, children: React.ReactNode, onUpdate: () => void }) {
+function EditUserDialog({ user, onUpdate }: { user: User, onUpdate: () => void }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     
@@ -123,14 +122,14 @@ function UserManagement({ users, adminUser, onUpdate }: { users: User[], adminUs
     );
 }
 
-
-export default function AdminPage() {
+function SettingsForm({ initialSettings }: { initialSettings: AppSettings }) {
     const { toast } = useToast();
-    const [user, setUser] = useState<User | null>(null);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
-    const [settings, setSettings] = useState<AppSettings | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [settings, setSettings] = useState(initialSettings);
 
+    useEffect(() => {
+        setSettings(initialSettings);
+    }, [initialSettings]);
+    
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         const newSettings = {
             maintenanceMode: formData.get('maintenanceMode') === 'on',
@@ -143,9 +142,6 @@ export default function AdminPage() {
                 title: "Success",
                 description: result.message,
             });
-            // Re-fetch settings after successful update
-            const appSettings = await getSettings();
-            setSettings(appSettings);
         } else {
              toast({
                 variant: "destructive",
@@ -155,7 +151,47 @@ export default function AdminPage() {
         }
         return result;
     }, { success: false, message: ''});
+    
+    return (
+        <form action={formAction}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>General Settings</CardTitle>
+                    <CardDescription>Manage general settings for the application.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="maintenance-mode" className="text-base">Maintenance Mode</Label>
+                            <p className="text-sm text-muted-foreground">
+                                Temporarily disable access to the portal for non-admins.
+                            </p>
+                        </div>
+                        <Switch id="maintenance-mode" name="maintenanceMode" checked={settings.maintenanceMode} onCheckedChange={(checked) => setSettings({...settings, maintenanceMode: checked})} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="loginImageUrl">Login Page Image URL</Label>
+                        <Input id="loginImageUrl" name="loginImageUrl" value={settings.loginImageUrl} onChange={(e) => setSettings({...settings, loginImageUrl: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="dashboardBannerUrl">Dashboard Banner Image URL</Label>
+                        <Input id="dashboardBannerUrl" name="dashboardBannerUrl" value={settings.dashboardBannerUrl} onChange={(e) => setSettings({...settings, dashboardBannerUrl: e.target.value})} />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button type="submit">Save Changes</Button>
+                </CardFooter>
+            </Card>
+        </form>
+    );
+}
 
+export default function AdminPage() {
+    const [user, setUser] = useState<User | null>(null);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [settings, setSettings] = useState<AppSettings | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [key, setKey] = useState(0); // Key to force re-render
 
     async function fetchData() {
         setLoading(true);
@@ -179,6 +215,14 @@ export default function AdminPage() {
 
     useEffect(() => {
         fetchData();
+        
+        // Polling to keep settings up to date
+        const interval = setInterval(async () => {
+            const freshSettings = await getSettings();
+            setSettings(freshSettings);
+        }, 2000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const handleUserUpdate = async () => {
@@ -189,7 +233,6 @@ export default function AdminPage() {
             console.error("Failed to re-fetch users:", error);
         }
     }
-
 
     if (loading || !settings || !user) {
         return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -202,36 +245,7 @@ export default function AdminPage() {
                 description="Manage the portal."
             />
             <div className="space-y-8 max-w-4xl mx-auto">
-                 <form action={formAction}>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>General Settings</CardTitle>
-                            <CardDescription>Manage general settings for the application.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <Label htmlFor="maintenance-mode" className="text-base">Maintenance Mode</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Temporarily disable access to the portal for non-admins.
-                                    </p>
-                                </div>
-                                <Switch id="maintenance-mode" name="maintenanceMode" checked={settings.maintenanceMode} onCheckedChange={(checked) => setSettings({...settings, maintenanceMode: checked})} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="loginImageUrl">Login Page Image URL</Label>
-                                <Input id="loginImageUrl" name="loginImageUrl" value={settings.loginImageUrl} onChange={(e) => setSettings({...settings, loginImageUrl: e.target.value})} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="dashboardBannerUrl">Dashboard Banner Image URL</Label>
-                                <Input id="dashboardBannerUrl" name="dashboardBannerUrl" value={settings.dashboardBannerUrl} onChange={(e) => setSettings({...settings, dashboardBannerUrl: e.target.value})} />
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button type="submit">Save Changes</Button>
-                        </CardFooter>
-                    </Card>
-                </form>
+                 <SettingsForm initialSettings={settings} />
                 <Separator />
                 <UserManagement users={allUsers} adminUser={user} onUpdate={handleUserUpdate} />
             </div>

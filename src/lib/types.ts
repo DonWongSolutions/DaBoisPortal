@@ -25,12 +25,13 @@ export interface Event {
   date: string;
   description: string;
   isFamilyEvent: boolean;
-  type: 'group' | 'personal';
+  type: 'group' | 'personal' | 'birthday';
   createdBy: string;
   responses: Record<string, UserAvailability>;
   suggestions?: EventSuggestion[];
   isPrivate?: boolean;
   tripId?: number;
+  color?: string;
 }
 
 export interface ItineraryActivity {

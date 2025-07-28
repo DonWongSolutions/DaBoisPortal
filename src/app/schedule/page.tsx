@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Event, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { Gift } from 'lucide-react';
 
 function generateCalendarDays(year: number, month: number) {
     const date = new Date(year, month, 1);
@@ -68,14 +69,18 @@ function ScheduleCalendar({ events, year, month, currentUser }: { events: Event[
                                     {dayEvents.map(event => {
                                         const isCreator = event.createdBy === currentUser.name;
                                         const eventTitle = (event.type === 'personal' && event.isPrivate && !isCreator) ? "Busy" : event.title;
+                                        const colorClass = event.color || (
+                                            isClash && event.type === 'group' ? 'bg-destructive text-destructive-foreground' : 'bg-accent text-accent-foreground'
+                                        );
                                         
                                         return (
                                           <div key={event.id} className={cn(
-                                              "p-1 rounded-md text-xs",
-                                              isClash && event.type === 'group' ? 'bg-destructive text-destructive-foreground' : 'bg-accent text-accent-foreground',
+                                              "p-1 rounded-md text-xs flex items-center gap-1",
+                                              colorClass,
                                               event.type === 'personal' && 'bg-purple-200 text-purple-800'
                                           )}>
-                                              {eventTitle}
+                                              {event.type === 'birthday' && <Gift className="h-3 w-3" />}
+                                              <span>{eventTitle}</span>
                                           </div>
                                         )
                                     })}
@@ -100,6 +105,22 @@ export default async function SchedulePage() {
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
+
+  const birthdayEvents: Event[] = users.map(member => {
+      const birthDate = new Date(member.birthday);
+      const birthdayThisYear = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+      return {
+          id: member.id + 1000, // aribtrary offset to avoid id clashes
+          title: `${member.name}'s Birthday`,
+          date: birthdayThisYear.toISOString().split('T')[0],
+          description: `It's ${member.name}'s birthday!`,
+          isFamilyEvent: false,
+          type: 'birthday',
+          createdBy: 'system',
+          responses: {},
+          color: 'bg-pink-200 text-pink-800'
+      };
+  });
   
   const memberSchedules = users.map(member => ({
       name: member.name,
@@ -121,7 +142,9 @@ export default async function SchedulePage() {
       return false;
   });
 
-  const tabs = [{name: "Main", events: mainScheduleEvents}, ...memberSchedules];
+  const combinedMainEvents = [...mainScheduleEvents, ...birthdayEvents];
+
+  const tabs = [{name: "Main", events: combinedMainEvents}, ...memberSchedules];
 
   return (
     <AppShell user={user}>

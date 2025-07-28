@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getSession } from '@/lib/auth';
-import { getEvents, getSettings, getTrips } from '@/lib/data';
+import { getEvents, getSettings, getTrips, getUsers } from '@/lib/data';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -11,7 +11,23 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Check, Mail, Phone, Cake, Users, Plane, Calendar, ChevronsRight } from 'lucide-react';
+import { Check, Mail, Phone, Cake, Users, Plane, Calendar, ChevronsRight, Gift } from 'lucide-react';
+import type { User } from '@/lib/types';
+import { differenceInDays, format, nextDay } from 'date-fns';
+
+function getNextBirthday(birthday: string) {
+    const today = new Date();
+    const birthDate = new Date(birthday);
+    
+    let nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+    
+    if (nextBirthday < today) {
+        nextBirthday.setFullYear(today.getFullYear() + 1);
+    }
+    
+    return nextBirthday;
+}
+
 
 export default async function DashboardPage() {
   const user = await getSession();
@@ -22,6 +38,15 @@ export default async function DashboardPage() {
   const settings = await getSettings();
   const allEvents = await getEvents();
   const allTrips = await getTrips();
+  const allUsers = await getUsers();
+  
+  const memberUsers = allUsers.filter(u => u.role === 'member');
+  const upcomingBirthdays = memberUsers.map(u => {
+      const nextBirthday = getNextBirthday(u.birthday);
+      const daysUntil = differenceInDays(nextBirthday, new Date());
+      return { ...u, nextBirthday, daysUntil };
+  }).sort((a,b) => a.daysUntil - b.daysUntil).slice(0, 4);
+
 
   const upcomingEvents = allEvents
     .filter(event => new Date(event.date) >= new Date())
@@ -72,36 +97,66 @@ export default async function DashboardPage() {
       
       <div className="space-y-8">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Your Info</CardTitle>
-              <CardDescription>Your personal details.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                    <AvatarImage src={user.profilePictureUrl} data-ai-hint="user avatar" />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <p className="font-semibold text-lg">{user.name}</p>
-                    <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>{user.role}</Badge>
+          <div className="lg:col-span-1 space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Info</CardTitle>
+                <CardDescription>Your personal details.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                      <AvatarImage src={user.profilePictureUrl} data-ai-hint="user avatar" />
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                      <p className="font-semibold text-lg">{user.name}</p>
+                      <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>{user.role}</Badge>
+                  </div>
                 </div>
-              </div>
-              <Separator />
-              <div className="space-y-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-3">
-                      <Cake className="h-4 w-4" /> <span>Born on {formatDate(user.birthday)} ({user.age} years old)</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                      <Mail className="h-4 w-4" /> <span>{user.email}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                      <Phone className="h-4 w-4" /> <span>{user.phone}</span>
-                  </div>
-              </div>
-            </CardContent>
-          </Card>
+                <Separator />
+                <div className="space-y-3 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-3">
+                        <Cake className="h-4 w-4" /> <span>Born on {formatDate(user.birthday)} ({user.age} years old)</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Mail className="h-4 w-4" /> <span>{user.email}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Phone className="h-4 w-4" /> <span>{user.phone}</span>
+                    </div>
+                </div>
+              </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Gift className="h-5 w-5" /> Birthday Countdown</CardTitle>
+                    <CardDescription>Upcoming birthdays in the group.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-4">
+                        {upcomingBirthdays.map(bUser => (
+                            <li key={bUser.id} className="flex items-center justify-between">
+                               <div className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={bUser.profilePictureUrl} data-ai-hint="user avatar" />
+                                    <AvatarFallback>{bUser.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">{bUser.name}</p>
+                                    <p className="text-xs text-muted-foreground">{format(bUser.nextBirthday, 'MMMM do')}</p>
+                                </div>
+                               </div>
+                               <div className="text-right">
+                                 <p className="font-bold text-lg">{bUser.daysUntil}</p>
+                                 <p className="text-xs text-muted-foreground">days</p>
+                               </div>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+          </div>
 
           <Card className="lg:col-span-2">
             <CardHeader>
