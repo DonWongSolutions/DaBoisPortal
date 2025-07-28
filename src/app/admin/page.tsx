@@ -18,71 +18,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 
-function SettingsForm({ initialSettings, onSave }: { initialSettings: AppSettings, onSave: () => Promise<void> }) {
-    const { toast } = useToast();
-    const [settings, setSettings] = useState(initialSettings);
-
-    useEffect(() => {
-        setSettings(initialSettings);
-    }, [initialSettings]);
-    
-    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
-        const newSettings = {
-            maintenanceMode: formData.get('maintenanceMode') === 'on',
-            loginImageUrl: formData.get('loginImageUrl') as string,
-            dashboardBannerUrl: formData.get('dashboardBannerUrl') as string,
-        };
-        const result = await updateSettingsAction(newSettings);
-        if (result.success) {
-            toast({
-                title: "Success",
-                description: result.message,
-            });
-            await onSave();
-        } else {
-             toast({
-                variant: "destructive",
-                title: "Error",
-                description: result.message,
-            });
-        }
-        return result;
-    }, { success: false, message: ''});
-
-
-    return (
-        <form action={formAction}>
-            <Card>
-                <CardHeader>
-                    <CardTitle>General Settings</CardTitle>
-                    <CardDescription>Manage general settings for the application.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                            <Label htmlFor="maintenance-mode" className="text-base">Maintenance Mode</Label>
-                            <p className="text-sm text-muted-foreground">
-                                Temporarily disable access to the portal for non-admins.
-                            </p>
-                        </div>
-                        <Switch id="maintenance-mode" name="maintenanceMode" checked={settings.maintenanceMode} onCheckedChange={(checked) => setSettings({...settings, maintenanceMode: checked})} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="loginImageUrl">Login Page Image URL</Label>
-                        <Input id="loginImageUrl" name="loginImageUrl" value={settings.loginImageUrl} onChange={(e) => setSettings({...settings, loginImageUrl: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="dashboardBannerUrl">Dashboard Banner Image URL</Label>
-                        <Input id="dashboardBannerUrl" name="dashboardBannerUrl" value={settings.dashboardBannerUrl} onChange={(e) => setSettings({...settings, dashboardBannerUrl: e.target.value})} />
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <Button type="submit">Save Changes</Button>
-                </CardFooter>
-            </Card>
-        </form>
-    );
-}
 
 function EditUserDialog({ user, onUpdate }: { user: User, children: React.ReactNode, onUpdate: () => void }) {
     const { toast } = useToast();
@@ -190,10 +125,37 @@ function UserManagement({ users, adminUser, onUpdate }: { users: User[], adminUs
 
 
 export default function AdminPage() {
+    const { toast } = useToast();
     const [user, setUser] = useState<User | null>(null);
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const newSettings = {
+            maintenanceMode: formData.get('maintenanceMode') === 'on',
+            loginImageUrl: formData.get('loginImageUrl') as string,
+            dashboardBannerUrl: formData.get('dashboardBannerUrl') as string,
+        };
+        const result = await updateSettingsAction(newSettings);
+        if (result.success) {
+            toast({
+                title: "Success",
+                description: result.message,
+            });
+            // Re-fetch settings after successful update
+            const appSettings = await getSettings();
+            setSettings(appSettings);
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.message,
+            });
+        }
+        return result;
+    }, { success: false, message: ''});
+
 
     async function fetchData() {
         setLoading(true);
@@ -219,23 +181,18 @@ export default function AdminPage() {
         fetchData();
     }, []);
 
-    const handleDataUpdate = async () => {
+    const handleUserUpdate = async () => {
        try {
-            const [appSettings, users] = await Promise.all([getSettings(), getUsers()]);
-            setSettings(appSettings);
+            const users = await getUsers();
             setAllUsers(users);
         } catch (error) {
-            console.error("Failed to re-fetch data:", error);
+            console.error("Failed to re-fetch users:", error);
         }
     }
 
 
-    if (loading) {
+    if (loading || !settings || !user) {
         return <div className="flex justify-center items-center h-screen">Loading...</div>;
-    }
-
-    if (!user || !settings) {
-        return <div>Error loading page. Please try logging in again.</div>;
     }
   
     return (
@@ -245,9 +202,38 @@ export default function AdminPage() {
                 description="Manage the portal."
             />
             <div className="space-y-8 max-w-4xl mx-auto">
-                <SettingsForm initialSettings={settings} onSave={handleDataUpdate} />
+                 <form action={formAction}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>General Settings</CardTitle>
+                            <CardDescription>Manage general settings for the application.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="maintenance-mode" className="text-base">Maintenance Mode</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Temporarily disable access to the portal for non-admins.
+                                    </p>
+                                </div>
+                                <Switch id="maintenance-mode" name="maintenanceMode" checked={settings.maintenanceMode} onCheckedChange={(checked) => setSettings({...settings, maintenanceMode: checked})} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="loginImageUrl">Login Page Image URL</Label>
+                                <Input id="loginImageUrl" name="loginImageUrl" value={settings.loginImageUrl} onChange={(e) => setSettings({...settings, loginImageUrl: e.target.value})} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="dashboardBannerUrl">Dashboard Banner Image URL</Label>
+                                <Input id="dashboardBannerUrl" name="dashboardBannerUrl" value={settings.dashboardBannerUrl} onChange={(e) => setSettings({...settings, dashboardBannerUrl: e.target.value})} />
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="submit">Save Changes</Button>
+                        </CardFooter>
+                    </Card>
+                </form>
                 <Separator />
-                <UserManagement users={allUsers} adminUser={user} onUpdate={handleDataUpdate} />
+                <UserManagement users={allUsers} adminUser={user} onUpdate={handleUserUpdate} />
             </div>
         </AppShell>
     );

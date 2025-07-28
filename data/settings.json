@@ -1,5 +1,5 @@
 {
-  "maintenanceMode": true,
-  "loginImageUrl": "https://placehold.co/1000x1500.png",
+  "maintenanceMode": false,
+  "loginImageUrl": "https://picsum.photos/2532/1170",
   "dashboardBannerUrl": "https://placehold.co/1200x400.png"
 }
