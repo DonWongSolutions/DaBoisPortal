@@ -1,30 +1,41 @@
 
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getUsers } from '@/lib/data';
 
-const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin'];
+const protectedRoutes = ['/dashboard', '/events', '/schedule', '/trips', '/admin', '/chat', '/linkboard'];
 const memberOnlyRoutes = ['/profile'];
 const authRoutes = ['/login'];
 
-export function middleware(request: NextRequest) {
-  const session = request.cookies.get('da_bois_session')?.value;
+export async function middleware(request: NextRequest) {
+  const sessionCookie = request.cookies.get('da_bois_session');
+  const sessionUser = sessionCookie?.value;
   const { pathname } = request.nextUrl;
 
-
   // If user is trying to access a protected route without a session, redirect to login
-  if (!session && (protectedRoutes.some(route => pathname.startsWith(route)) || memberOnlyRoutes.some(route => pathname.startsWith(route)))) {
+  if (!sessionUser && (protectedRoutes.some(route => pathname.startsWith(route)) || memberOnlyRoutes.some(route => pathname.startsWith(route)))) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If user is authenticated and tries to access an auth route, redirect to dashboard
-  if (session && authRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  // If user is authenticated
+  if (sessionUser) {
+    // If user is on an auth route, redirect to dashboard
+    if (authRoutes.some(route => pathname.startsWith(route))) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    
+    // Check for verification flags
+    const users = await getUsers();
+    const user = users.find(u => u.name === sessionUser);
+
+    if (user && (user.forceInfoUpdate || user.forcePasswordChange)) {
+      // If flags are set, they can only access the profile page
+      if (pathname !== '/profile') {
+        return NextResponse.redirect(new URL('/profile', request.url));
+      }
+    }
   }
-  
-  // A parent trying to access member-only route should be redirected
-  // We can't check role directly here, so we'll rely on server components to handle role-based UI,
-  // but we can add a check in the server actions for mutations.
+
 
   return NextResponse.next();
 }

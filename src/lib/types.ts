@@ -10,6 +10,8 @@ export interface User {
   phone: string;
   email: string;
   profilePictureUrl?: string;
+  forceInfoUpdate?: boolean;
+  forcePasswordChange?: boolean;
 }
 
 export type UserAvailability = 'yes' | 'no' | 'maybe' | 'pending';

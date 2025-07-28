@@ -16,6 +16,9 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { User } from '@/lib/types';
 import { format } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, ShieldAlert } from 'lucide-react';
+
 
 function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: User) => void }) {
     const { toast } = useToast();
@@ -32,6 +35,9 @@ function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: 
             const updatedUser = await getSessionAction();
             if (updatedUser) {
                 onUserUpdate(updatedUser);
+                 if (!updatedUser.forceInfoUpdate && !updatedUser.forcePasswordChange) {
+                    redirect('/dashboard');
+                }
             }
             if (formData.has('profilePictureUrl')) {
                setOpenDialog(false);
@@ -76,6 +82,17 @@ function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: 
                     <CardDescription>Update your personal information.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                     {(user.forceInfoUpdate || user.forcePasswordChange) && (
+                        <Alert variant="destructive">
+                            <ShieldAlert className="h-4 w-4" />
+                            <AlertTitle>Action Required</AlertTitle>
+                            <AlertDescription>
+                                {user.forceInfoUpdate && "Please review and confirm your personal details (email, phone, birthday) are correct."}
+                                {user.forceInfoUpdate && user.forcePasswordChange && <br/>}
+                                {user.forcePasswordChange && "Please update your password."}
+                            </AlertDescription>
+                        </Alert>
+                    )}
                      <div className="flex items-center gap-4">
                         <Avatar className="h-20 w-20">
                             <AvatarImage src={user.profilePictureUrl} data-ai-hint="user avatar" />
@@ -124,11 +141,11 @@ function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: 
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="password">New Password</Label>
-                            <Input id="password" name="password" type="password" />
+                            <Input id="password" name="password" type="password" required={user.forcePasswordChange} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                            <Input id="confirmPassword" name="confirmPassword" type="password" />
+                            <Input id="confirmPassword" name="confirmPassword" type="password" required={user.forcePasswordChange} />
                         </div>
                      </div>
                 </CardContent>

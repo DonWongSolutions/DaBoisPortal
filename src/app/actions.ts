@@ -25,7 +25,11 @@ export async function loginAction(prevState: any, formData: FormData) {
   }
 
   await setSession(user.name);
-  redirect('/dashboard');
+  if (user.forceInfoUpdate || user.forcePasswordChange) {
+      redirect('/profile');
+  } else {
+      redirect('/dashboard');
+  }
 }
 
 export async function logoutAction() {
@@ -71,6 +75,7 @@ export async function updateUserAction(formData: FormData) {
         const birthday = formData.get('birthday') as string;
         updatedUser.birthday = birthday;
         updatedUser.age = calculateAge(birthday);
+        updatedUser.forceInfoUpdate = false; // Turn off flag
     }
 
     const profilePicUrl = formData.get('profilePictureUrl') as string | null;
@@ -81,6 +86,7 @@ export async function updateUserAction(formData: FormData) {
 
     if (newPassword) {
         updatedUser.password = newPassword;
+        updatedUser.forcePasswordChange = false; // Turn off flag
     }
     
     users[userIndex] = updatedUser;
@@ -118,6 +124,28 @@ export async function adminUpdateUserAction(userId: number, formData: FormData) 
     return { success: true, message: 'User updated successfully.' };
 }
 
+export async function adminUpdateUserFlagsAction(userId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    const users = await getUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+
+    if (userIndex === -1) {
+        return { success: false, message: 'User not found.' };
+    }
+
+    users[userIndex].forceInfoUpdate = formData.get('forceInfoUpdate') === 'on';
+    users[userIndex].forcePasswordChange = formData.get('forcePasswordChange') === 'on';
+    
+    await saveUsers(users);
+    
+    revalidatePath('/admin');
+    return { success: true, message: 'User flags updated successfully.' };
+}
+
 
 export async function resetPasswordAction(userId: number, formData: FormData) {
     const sessionUser = await getSession();
@@ -144,13 +172,18 @@ export async function resetPasswordAction(userId: number, formData: FormData) {
 }
 
 
-export async function updateSettingsAction(settings: AppSettings) {
+export async function updateSettingsAction(formData: FormData) {
     const sessionUser = await getSession();
     if (!sessionUser || sessionUser.role !== 'admin') {
         return { success: false, message: 'Unauthorized.' };
     }
     try {
-        await saveSettings(settings);
+         const newSettings = {
+            maintenanceMode: formData.get('maintenanceMode') === 'on',
+            loginImageUrl: formData.get('loginImageUrl') as string,
+            dashboardBannerUrl: formData.get('dashboardBannerUrl') as string,
+        };
+        await saveSettings(newSettings);
         revalidatePath('/admin');
         revalidatePath('/login');
         revalidatePath('/dashboard');

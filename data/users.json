@@ -1,3 +1,4 @@
+
 [
   {
     "id": 1,
@@ -8,7 +9,9 @@
     "birthday": "1996-05-10",
     "phone": "123-456-7890",
     "email": "don@dabois.com",
-    "profilePictureUrl": ""
+    "profilePictureUrl": "",
+    "forceInfoUpdate": false,
+    "forcePasswordChange": false
   },
   {
     "id": 2,
@@ -19,7 +22,9 @@
     "birthday": "2011-07-19",
     "phone": "234-567-momo",
     "email": "kokoko@j.om",
-    "profilePictureUrl": ""
+    "profilePictureUrl": "",
+    "forceInfoUpdate": false,
+    "forcePasswordChange": false
   },
   {
     "id": 3,
@@ -30,7 +35,9 @@
     "birthday": "1996-03-22",
     "phone": "345-678-9012",
     "email": "xavier@dabois.com",
-    "profilePictureUrl": ""
+    "profilePictureUrl": "",
+    "forceInfoUpdate": false,
+    "forcePasswordChange": false
   },
   {
     "id": 4,
@@ -41,7 +48,9 @@
     "birthday": "1998-11-30",
     "phone": "456-789-0123",
     "email": "nathan@dabois.com",
-    "profilePictureUrl": ""
+    "profilePictureUrl": "",
+    "forceInfoUpdate": false,
+    "forcePasswordChange": false
   },
   {
     "id": 5,
@@ -52,6 +61,8 @@
     "birthday": "1969-01-01",
     "phone": "555-555-5555",
     "email": "dad@dabois.com",
-    "profilePictureUrl": ""
+    "profilePictureUrl": "",
+    "forceInfoUpdate": false,
+    "forcePasswordChange": false
   }
 ]
