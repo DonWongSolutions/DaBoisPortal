@@ -38,6 +38,8 @@ import {
   ChevronDown,
   User as UserIcon,
   Link as LinkIcon,
+  Camera,
+  Quote,
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 
@@ -47,6 +49,8 @@ const navItems = [
   { href: '/schedule', label: 'Schedule', icon: CalendarCheck, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/trips', label: 'Trip Planner', icon: Plane, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/linkboard', label: 'Link Board', icon: LinkIcon, allowedRoles: ['admin', 'member', 'parent'] },
+  { href: '/memories', label: 'Memories', icon: Camera, allowedRoles: ['admin', 'member', 'parent'] },
+  { href: '/hall-of-fame', label: 'Hall of Fame', icon: Quote, allowedRoles: ['admin', 'member', 'parent'] },
 ];
 
 function UserMenu({ user }: { user: User }) {

@@ -95,3 +95,28 @@ export interface ChatMessage {
     text: string;
     timestamp: string;
 }
+
+export interface MemoryComment {
+  id: number;
+  author: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface Memory {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+  imageUrls: string[];
+  createdBy: string;
+  comments: MemoryComment[];
+}
+
+export interface WiseWord {
+  id: number;
+  phrase: string;
+  author: string;
+  context?: string;
+  addedBy: string;
+}
