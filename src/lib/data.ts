@@ -55,17 +55,23 @@ export async function getUsers(): Promise<User[]> {
         "age": 28,
         "birthday": "1996-05-10",
         "phone": "123-456-7890",
-        "email": "don@dabois.com"
+        "email": "don@dabois.com",
+        "profilePictureUrl": "",
+        "forceInfoUpdate": false,
+        "forcePasswordChange": false
       },
       {
         "id": 2,
         "name": "Isaac",
         "password": "Ballsac",
         "role": "member",
-        "age": 27,
-        "birthday": "1997-08-15",
-        "phone": "234-567-8901",
-        "email": "isaac@dabois.com"
+        "age": 14,
+        "birthday": "2011-07-19",
+        "phone": "234-567-momo",
+        "email": "kokoko@j.om",
+        "profilePictureUrl": "",
+        "forceInfoUpdate": true,
+        "forcePasswordChange": true
       },
       {
         "id": 3,
@@ -75,7 +81,10 @@ export async function getUsers(): Promise<User[]> {
         "age": 28,
         "birthday": "1996-03-22",
         "phone": "345-678-9012",
-        "email": "xavier@dabois.com"
+        "email": "xavier@dabois.com",
+        "profilePictureUrl": "",
+        "forceInfoUpdate": false,
+        "forcePasswordChange": false
       },
       {
         "id": 4,
@@ -85,7 +94,10 @@ export async function getUsers(): Promise<User[]> {
         "age": 26,
         "birthday": "1998-11-30",
         "phone": "456-789-0123",
-        "email": "nathan@dabois.com"
+        "email": "nathan@dabois.com",
+        "profilePictureUrl": "",
+        "forceInfoUpdate": false,
+        "forcePasswordChange": false
       },
       {
         "id": 5,
@@ -95,7 +107,10 @@ export async function getUsers(): Promise<User[]> {
         "age": 55,
         "birthday": "1969-01-01",
         "phone": "555-555-5555",
-        "email": "dad@dabois.com"
+        "email": "dad@dabois.com",
+        "profilePictureUrl": "",
+        "forceInfoUpdate": false,
+        "forcePasswordChange": false
       }
     ];
     return readJsonFile<User[]>('users.json', defaultUsers);
@@ -125,8 +140,8 @@ export async function saveTrips(trips: Trip[]): Promise<void> {
 export async function getSettings(): Promise<AppSettings> {
     const defaultSettings: AppSettings = {
         maintenanceMode: false,
-        loginImageUrl: "https://placehold.co/1000x1500.png",
-        dashboardBannerUrl: "https://placehold.co/1200x400.png"
+        loginImageUrl: "https://roboconoxon.org.uk/wp-content/uploads/2025/07/DSC000441.jpg",
+        dashboardBannerUrl: "https://roboconoxon.org.uk/wp-content/uploads/2025/07/bcf363b1-2a58-48c2-9abf-465ff7e630db-scaled.jpeg"
     };
     return readJsonFile<AppSettings>('settings.json', defaultSettings);
 }

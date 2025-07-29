@@ -1,4 +1,3 @@
-
 [
   {
     "id": 1,
@@ -23,8 +22,8 @@
     "phone": "234-567-momo",
     "email": "kokoko@j.om",
     "profilePictureUrl": "",
-    "forceInfoUpdate": false,
-    "forcePasswordChange": false
+    "forceInfoUpdate": true,
+    "forcePasswordChange": true
   },
   {
     "id": 3,
