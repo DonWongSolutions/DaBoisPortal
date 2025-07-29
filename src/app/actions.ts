@@ -443,7 +443,7 @@ export async function deleteTripAction(tripId: number) {
     revalidatePath('/dashboard');
     revalidatePath('/schedule');
     
-    redirect('/trips');
+    return { success: true };
 }
 
 export async function createEventFromTripAction(formData: FormData) {

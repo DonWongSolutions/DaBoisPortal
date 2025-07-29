@@ -14,15 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { addItineraryItemAction, addCostItemAction, addTripSuggestionAction, createEventFromTripAction, deleteTripAction } from '@/app/actions';
+import { addItineraryItemAction, addCostItemAction, addTripSuggestionAction, createEventFromTripAction } from '@/app/actions';
 import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send, Megaphone, Trash2 } from 'lucide-react';
 import type { Trip, User, ItineraryActivity } from '@/lib/types';
 import { useFormStatus } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-
 
 function AddItineraryForm({ trip }: { trip: Trip }) {
     const { toast } = useToast();
@@ -225,19 +223,6 @@ function TripActionsCard({ trip, eventExists, user }: { trip: Trip, eventExists:
     }, { success: false, message: ''});
     const { pending: isPublishing } = useFormStatus();
     
-    const [deleteState, deleteFormAction] = useActionState(async (prevState: any, formData: FormData) => {
-        const result = await deleteTripAction(trip.id);
-        // The action redirects, so we might not see the toast unless the redirect fails
-        if (result && !result.success) {
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: result.message,
-            });
-        }
-        return result;
-    }, null);
-
     return (
         <Card>
             <CardHeader>
@@ -245,7 +230,9 @@ function TripActionsCard({ trip, eventExists, user }: { trip: Trip, eventExists:
             </CardHeader>
              <CardContent>
                 {eventExists ? (
-                    <p className="text-sm text-muted-foreground">An event for this trip has already been published.</p>
+                     <Button className="w-full" variant="outline" asChild>
+                        <a href="/events">View Event</a>
+                    </Button>
                 ) : (
                     <form action={publishFormAction}>
                         <input type="hidden" name="tripId" value={trip.id} />
@@ -264,38 +251,6 @@ function TripActionsCard({ trip, eventExists, user }: { trip: Trip, eventExists:
                     </form>
                 )}
              </CardContent>
-             <CardFooter className="flex flex-col gap-2">
-                 {eventExists && (
-                     <Button className="w-full" variant="outline" asChild>
-                        <a href="/events">View Event</a>
-                    </Button>
-                 )}
-                {user.role === 'admin' && (
-                    <form action={deleteFormAction} className="w-full">
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" className="w-full">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Trip
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the trip "{trip.name}" and any associated events.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction asChild>
-                                         <Button type="submit">Yes, delete trip</Button>
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </form>
-                )}
-             </CardFooter>
         </Card>
     )
 }
@@ -442,5 +397,3 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
         </AppShell>
     );
 }
-
-    
