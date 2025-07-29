@@ -6,7 +6,7 @@ import { redirect, useParams } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getSessionAction, getMemoryByIdAction, addMemoryCommentAction, deleteMemoryAction } from '@/app/actions';
+import { getSessionAction, getMemoryByIdAction, addMemoryCommentAction, deleteMemoryAction, deleteMemoryCommentAction } from '@/app/actions';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -106,6 +106,7 @@ export default function MemoryDetailPage() {
     const [user, setUser] = useState<User | null>(null);
     const [memory, setMemory] = useState<Memory | null>(null);
     const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
 
     const fetchMemory = async () => {
         try {
@@ -117,6 +118,16 @@ export default function MemoryDetailPage() {
             setMemory(fetchedMemory);
         } catch (error) {
             console.error("Failed to fetch memory:", error);
+        }
+    }
+
+    const handleDeleteComment = async (commentId: number) => {
+        const result = await deleteMemoryCommentAction(memoryId, commentId);
+        if (result.success) {
+            toast({ title: "Success", description: result.message });
+            fetchMemory();
+        } else {
+            toast({ variant: "destructive", title: "Error", description: result.message });
         }
     }
 
@@ -220,22 +231,50 @@ export default function MemoryDetailPage() {
                             <CommentForm memoryId={memory.id} />
                             <Separator />
                             <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
-                                {memory.comments.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map(comment => (
-                                    <div key={comment.id} className="flex gap-3">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarFallback>{comment.author.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-semibold text-sm">{comment.author}</span>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true })}
-                                                </span>
+                                {memory.comments.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map(comment => {
+                                    const canDeleteComment = user.role === 'admin' || user.name === comment.author;
+                                    return (
+                                        <div key={comment.id} className="flex gap-3 group">
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarFallback>{comment.author.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-semibold text-sm">{comment.author}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true })}
+                                                        </span>
+                                                        {canDeleteComment && (
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100">
+                                                                        <Trash2 className="h-3 w-3" />
+                                                                    </Button>
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                        <AlertDialogDescription>
+                                                                            This will permanently delete this comment. This action cannot be undone.
+                                                                        </AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                        <AlertDialogAction onClick={() => handleDeleteComment(comment.id)}>
+                                                                            Delete
+                                                                        </AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground">{comment.text}</p>
                                             </div>
-                                            <p className="text-sm text-muted-foreground">{comment.text}</p>
                                         </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                                 {memory.comments.length === 0 && (
                                     <p className="text-sm text-muted-foreground text-center py-4">No comments yet. Be the first to say something!</p>
                                 )}

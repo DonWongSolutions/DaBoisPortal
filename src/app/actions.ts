@@ -937,6 +937,37 @@ export async function addMemoryCommentAction(memoryId: number, formData: FormDat
     return { success: true, message: 'Comment added.' };
 }
 
+export async function deleteMemoryCommentAction(memoryId: number, commentId: number) {
+    const sessionUser = await getSession();
+    if (!sessionUser) {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    const memories = await getMemories();
+    const memory = memories.find(m => m.id === memoryId);
+    if (!memory) {
+        return { success: false, message: 'Memory not found.' };
+    }
+
+    const commentIndex = memory.comments.findIndex(c => c.id === commentId);
+    if (commentIndex === -1) {
+        return { success: false, message: 'Comment not found.' };
+    }
+
+    const comment = memory.comments[commentIndex];
+    const isAuthor = comment.author === sessionUser.name;
+    const isAdmin = sessionUser.role === 'admin';
+
+    if (!isAuthor && !isAdmin) {
+        return { success: false, message: 'You are not authorized to delete this comment.' };
+    }
+
+    memory.comments.splice(commentIndex, 1);
+    await saveMemories(memories);
+    revalidatePath(`/memories/${memoryId}`);
+    return { success: true, message: 'Comment deleted.' };
+}
+
 
 export async function getSessionAction() {
   return await getSession();
