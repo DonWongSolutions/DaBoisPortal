@@ -106,20 +106,36 @@ export default async function SchedulePage() {
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
 
-  const birthdayEvents: Event[] = users.map(member => {
-      const birthDate = new Date(member.birthday);
-      const birthdayThisYear = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
-      return {
-          id: member.id + 1000, // aribtrary offset to avoid id clashes
-          title: `${member.name}'s Birthday`,
-          date: birthdayThisYear.toISOString().split('T')[0],
-          description: `It's ${member.name}'s birthday!`,
-          isFamilyEvent: false,
-          type: 'birthday',
-          createdBy: 'system',
-          responses: {},
-          color: 'bg-pink-200 text-pink-800'
-      };
+  const birthdayEvents: Event[] = users.flatMap(member => {
+    const birthDate = new Date(member.birthday);
+    const events: Event[] = [];
+    // Birthday for current year
+    events.push({
+      id: member.id + 1000,
+      title: `${member.name}'s Birthday`,
+      date: new Date(currentYear, birthDate.getMonth(), birthDate.getDate()).toISOString().split('T')[0],
+      description: `It's ${member.name}'s birthday!`,
+      isFamilyEvent: false,
+      type: 'birthday',
+      createdBy: 'system',
+      responses: {},
+      color: 'bg-pink-200 text-pink-800'
+    });
+    // Birthday for next year if we are in December
+    if (currentMonth === 11) {
+         events.push({
+            id: member.id + 2000,
+            title: `${member.name}'s Birthday`,
+            date: new Date(currentYear + 1, birthDate.getMonth(), birthDate.getDate()).toISOString().split('T')[0],
+            description: `It's ${member.name}'s birthday!`,
+            isFamilyEvent: false,
+            type: 'birthday',
+            createdBy: 'system',
+            responses: {},
+            color: 'bg-pink-200 text-pink-800'
+        });
+    }
+    return events;
   });
   
   const memberSchedules = users.map(member => ({
@@ -145,6 +161,11 @@ export default async function SchedulePage() {
   const combinedMainEvents = [...mainScheduleEvents, ...birthdayEvents];
 
   const tabs = [{name: "Main", events: combinedMainEvents}, ...memberSchedules];
+  
+  const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
+  const nextMonthYear = nextMonthDate.getFullYear();
+  const nextMonth = nextMonthDate.getMonth();
+
 
   return (
     <AppShell user={user}>
@@ -160,7 +181,10 @@ export default async function SchedulePage() {
         </TabsList>
         {tabs.map(tab => (
             <TabsContent key={tab.name} value={tab.name}>
-                <ScheduleCalendar events={tab.events} year={currentYear} month={currentMonth} currentUser={user} />
+                <div className="space-y-8">
+                    <ScheduleCalendar events={tab.events} year={currentYear} month={currentMonth} currentUser={user} />
+                    <ScheduleCalendar events={tab.events} year={nextMonthYear} month={nextMonth} currentUser={user} />
+                </div>
             </TabsContent>
         ))}
       </Tabs>
