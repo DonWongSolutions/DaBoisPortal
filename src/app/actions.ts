@@ -783,6 +783,8 @@ export async function createWiseWordAction(formData: FormData) {
         author: formData.get('author') as string,
         context: formData.get('context') as string | undefined,
         addedBy: sessionUser.name,
+        upvotes: [],
+        pinned: false,
     };
 
     const wiseWords = await getWiseWordsData();
@@ -810,6 +812,62 @@ export async function deleteWiseWordAction(wiseWordId: number) {
     revalidatePath('/hall-of-fame');
     return { success: true, message: 'Wise words removed.' };
 }
+
+export async function upvoteWiseWordAction(wiseWordId: number) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role === 'parent') {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    const wiseWords = await getWiseWordsData();
+    const wiseWord = wiseWords.find(ww => ww.id === wiseWordId);
+    if (!wiseWord) {
+        return { success: false, message: 'Wise word not found.' };
+    }
+
+    const userVoteIndex = wiseWord.upvotes.indexOf(sessionUser.id);
+    if (userVoteIndex > -1) {
+        // User has already upvoted, so remove their vote
+        wiseWord.upvotes.splice(userVoteIndex, 1);
+    } else {
+        // User has not upvoted, so add their vote
+        wiseWord.upvotes.push(sessionUser.id);
+    }
+
+    await saveWiseWords(wiseWords);
+    revalidatePath('/hall-of-fame');
+    return { success: true };
+}
+
+export async function pinWiseWordAction(wiseWordId: number) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    const wiseWords = await getWiseWordsData();
+    const wiseWordToPin = wiseWords.find(ww => ww.id === wiseWordId);
+    if (!wiseWordToPin) {
+        return { success: false, message: 'Wise word not found.' };
+    }
+
+    // Toggle the pinned state
+    const newPinnedState = !wiseWordToPin.pinned;
+
+    // Unpin all other words if we are pinning a new one
+    if (newPinnedState) {
+        wiseWords.forEach(ww => {
+            ww.pinned = false;
+        });
+    }
+
+    wiseWordToPin.pinned = newPinnedState;
+
+    await saveWiseWords(wiseWords);
+    revalidatePath('/hall-of-fame');
+    return { success: true };
+}
+
 
 export async function getMemoriesAction() {
     return (await getMemories()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

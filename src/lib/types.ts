@@ -119,4 +119,6 @@ export interface WiseWord {
   author: string;
   context?: string;
   addedBy: string;
+  upvotes: number[];
+  pinned: boolean;
 }
