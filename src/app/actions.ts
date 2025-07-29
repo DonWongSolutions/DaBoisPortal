@@ -424,6 +424,28 @@ export async function createTripAction(formData: FormData) {
     redirect('/trips');
 }
 
+export async function deleteTripAction(tripId: number) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return { success: false, message: 'Unauthorized.' };
+    }
+
+    const trips = await getTrips();
+    const updatedTrips = trips.filter(t => t.id !== tripId);
+    await saveTrips(updatedTrips);
+    
+    const events = await getEvents();
+    const updatedEvents = events.filter(e => e.tripId !== tripId);
+    await saveEvents(updatedEvents);
+
+    revalidatePath('/trips');
+    revalidatePath('/events');
+    revalidatePath('/dashboard');
+    revalidatePath('/schedule');
+    
+    redirect('/trips');
+}
+
 export async function createEventFromTripAction(formData: FormData) {
     const sessionUser = await getSession();
     if (!sessionUser || sessionUser.role === 'parent') {

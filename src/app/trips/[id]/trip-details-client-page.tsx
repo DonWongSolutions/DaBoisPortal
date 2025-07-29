@@ -14,13 +14,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { addItineraryItemAction, addCostItemAction, addTripSuggestionAction, createEventFromTripAction } from '@/app/actions';
-import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send, Megaphone } from 'lucide-react';
+import { addItineraryItemAction, addCostItemAction, addTripSuggestionAction, createEventFromTripAction, deleteTripAction } from '@/app/actions';
+import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send, Megaphone, Trash2 } from 'lucide-react';
 import type { Trip, User, ItineraryActivity } from '@/lib/types';
 import { useFormStatus } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 function AddItineraryForm({ trip }: { trip: Trip }) {
     const { toast } = useToast();
@@ -200,7 +202,7 @@ function DayScheduleView({ activities }: { activities: ItineraryActivity[] }) {
     );
 }
 
-function PublishEventForm({ trip, eventExists }: { trip: Trip, eventExists: boolean }) {
+function PublishEventForm({ trip, eventExists, user }: { trip: Trip, eventExists: boolean, user: User }) {
     const { toast } = useToast();
     const router = useRouter();
 
@@ -223,42 +225,68 @@ function PublishEventForm({ trip, eventExists }: { trip: Trip, eventExists: bool
         return result;
     }, { success: false, message: ''});
     const { pending } = useFormStatus();
+    
+    const deleteTripById = deleteTripAction.bind(null, trip.id);
 
     return (
-        <form action={formAction}>
-            <input type="hidden" name="tripId" value={trip.id} />
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5" /> Event Actions</CardTitle>
-                </CardHeader>
-                 <CardContent>
-                    {eventExists ? (
-                        <p className="text-sm text-muted-foreground">An event for this trip has already been published.</p>
-                    ) : (
-                        <div className="flex items-center justify-between rounded-lg border p-4">
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5" /> Trip Actions</CardTitle>
+            </CardHeader>
+             <CardContent>
+                {eventExists ? (
+                    <p className="text-sm text-muted-foreground">An event for this trip has already been published.</p>
+                ) : (
+                    <form action={formAction}>
+                        <input type="hidden" name="tripId" value={trip.id} />
+                        <div className="flex items-center justify-between rounded-lg border p-4 mb-4">
                             <div className="space-y-0.5">
                                 <Label htmlFor="isFamilyEvent" className="text-base">Include Parents</Label>
                                 <p className="text-sm text-muted-foreground">
-                                    Make this event visible to parents.
+                                    Make the event visible to parents.
                                 </p>
                             </div>
                             <Switch id="isFamilyEvent" name="isFamilyEvent" />
                         </div>
-                    )}
-                 </CardContent>
-                <CardFooter>
-                    {eventExists ? (
-                         <Button className="w-full" asChild>
-                            <a href="/events">View Event</a>
-                        </Button>
-                    ) : (
-                        <Button type="submit" className="w-full" disabled={pending}>
+                         <Button type="submit" className="w-full" disabled={pending}>
                             {pending ? 'Publishing...' : 'Publish to Events'}
                         </Button>
-                    )}
-                </CardFooter>
-            </Card>
-        </form>
+                    </form>
+                )}
+             </CardContent>
+             <CardFooter className="flex flex-col gap-2">
+                 {eventExists && (
+                     <Button className="w-full" variant="outline" asChild>
+                        <a href="/events">View Event</a>
+                    </Button>
+                 )}
+                {user.role === 'admin' && (
+                     <form action={deleteTripById} className="w-full">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" className="w-full">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Trip
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the trip "{trip.name}" and any associated events.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction asChild>
+                                        <Button type="submit">Yes, delete trip</Button>
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                     </form>
+                )}
+             </CardFooter>
+        </Card>
     )
 }
 
@@ -389,7 +417,7 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
                             </div>
                         </CardContent>
                     </Card>
-                     {canManageTrip && <PublishEventForm trip={trip} eventExists={eventExists} /> }
+                     {canManageTrip && <PublishEventForm trip={trip} eventExists={eventExists} user={user} /> }
 
                     {user.role === 'parent' ? (
                         <AddSuggestionForm tripId={trip.id} />
