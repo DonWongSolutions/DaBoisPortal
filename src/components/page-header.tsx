@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 interface PageHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
     title: string;
-    description?: string;
+    description?: React.ReactNode;
 }
 
 export function PageHeader({ title, description, className, children, ...props }: PageHeaderProps) {
@@ -14,9 +14,9 @@ export function PageHeader({ title, description, className, children, ...props }
                     {title}
                 </h1>
                 {description && (
-                    <p className="mt-2 text-lg text-muted-foreground">
+                    <div className="mt-2 text-lg text-muted-foreground">
                         {description}
-                    </p>
+                    </div>
                 )}
             </div>
             {children && <div className="flex-shrink-0">{children}</div>}
