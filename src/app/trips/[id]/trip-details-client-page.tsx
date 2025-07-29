@@ -202,18 +202,17 @@ function DayScheduleView({ activities }: { activities: ItineraryActivity[] }) {
     );
 }
 
-function PublishEventForm({ trip, eventExists, user }: { trip: Trip, eventExists: boolean, user: User }) {
+function TripActionsCard({ trip, eventExists, user }: { trip: Trip, eventExists: boolean, user: User }) {
     const { toast } = useToast();
     const router = useRouter();
 
-    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+    const [publishState, publishFormAction] = useActionState(async (prevState: any, formData: FormData) => {
         const result = await createEventFromTripAction(formData);
         if (result.success) {
             toast({
                 title: "Success",
                 description: result.message,
             });
-            // Redirect to events page after a short delay to show toast
             setTimeout(() => router.push('/events'), 1000);
         } else {
              toast({
@@ -224,9 +223,20 @@ function PublishEventForm({ trip, eventExists, user }: { trip: Trip, eventExists
         }
         return result;
     }, { success: false, message: ''});
-    const { pending } = useFormStatus();
+    const { pending: isPublishing } = useFormStatus();
     
-    const deleteTripById = deleteTripAction.bind(null, trip.id);
+    const [deleteState, deleteFormAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const result = await deleteTripAction(trip.id);
+        // The action redirects, so we might not see the toast unless the redirect fails
+        if (result && !result.success) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.message,
+            });
+        }
+        return result;
+    }, null);
 
     return (
         <Card>
@@ -237,7 +247,7 @@ function PublishEventForm({ trip, eventExists, user }: { trip: Trip, eventExists
                 {eventExists ? (
                     <p className="text-sm text-muted-foreground">An event for this trip has already been published.</p>
                 ) : (
-                    <form action={formAction}>
+                    <form action={publishFormAction}>
                         <input type="hidden" name="tripId" value={trip.id} />
                         <div className="flex items-center justify-between rounded-lg border p-4 mb-4">
                             <div className="space-y-0.5">
@@ -248,8 +258,8 @@ function PublishEventForm({ trip, eventExists, user }: { trip: Trip, eventExists
                             </div>
                             <Switch id="isFamilyEvent" name="isFamilyEvent" />
                         </div>
-                         <Button type="submit" className="w-full" disabled={pending}>
-                            {pending ? 'Publishing...' : 'Publish to Events'}
+                         <Button type="submit" className="w-full" disabled={isPublishing}>
+                            {isPublishing ? 'Publishing...' : 'Publish to Events'}
                         </Button>
                     </form>
                 )}
@@ -261,7 +271,7 @@ function PublishEventForm({ trip, eventExists, user }: { trip: Trip, eventExists
                     </Button>
                  )}
                 {user.role === 'admin' && (
-                     <form action={deleteTripById} className="w-full">
+                    <form action={deleteFormAction} className="w-full">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive" className="w-full">
@@ -278,12 +288,12 @@ function PublishEventForm({ trip, eventExists, user }: { trip: Trip, eventExists
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction asChild>
-                                        <Button type="submit">Yes, delete trip</Button>
+                                         <Button type="submit">Yes, delete trip</Button>
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                     </form>
+                    </form>
                 )}
              </CardFooter>
         </Card>
@@ -417,7 +427,7 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
                             </div>
                         </CardContent>
                     </Card>
-                     {canManageTrip && <PublishEventForm trip={trip} eventExists={eventExists} user={user} /> }
+                     {canManageTrip && <TripActionsCard trip={trip} eventExists={eventExists} user={user} /> }
 
                     {user.role === 'parent' ? (
                         <AddSuggestionForm tripId={trip.id} />
@@ -432,3 +442,5 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
         </AppShell>
     );
 }
+
+    
