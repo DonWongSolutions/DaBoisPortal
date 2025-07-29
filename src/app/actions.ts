@@ -4,7 +4,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
-import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, saveUsers, getLinks, saveLinks, getChatMessages, saveChatMessages, getMemories, saveMemories, getWiseWords, saveWiseWords } from '@/lib/data';
+import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, saveUsers, getLinks, saveLinks, getChatMessages, saveChatMessages, getMemories, saveMemories, getWiseWords as getWiseWordsData, saveWiseWords } from '@/lib/data';
 import type { AppSettings, Event, Trip, UserAvailability, User, Link as LinkType, ChatMessage, Memory, WiseWord } from '@/lib/types';
 import * as ical from 'node-ical';
 
@@ -785,12 +785,16 @@ export async function createWiseWordAction(formData: FormData) {
         addedBy: sessionUser.name,
     };
 
-    const wiseWords = await getWiseWords();
+    const wiseWords = await getWiseWordsData();
     wiseWords.push(newWiseWord);
     await saveWiseWords(wiseWords);
 
     revalidatePath('/hall-of-fame');
     return { success: true, message: 'Wise words immortalized!' };
+}
+
+export async function getWiseWords() {
+    return await getWiseWordsData();
 }
 
 export async function deleteWiseWordAction(wiseWordId: number) {
@@ -799,7 +803,7 @@ export async function deleteWiseWordAction(wiseWordId: number) {
         return { success: false, message: 'Unauthorized.' };
     }
 
-    let wiseWords = await getWiseWords();
+    let wiseWords = await getWiseWordsData();
     wiseWords = wiseWords.filter(ww => ww.id !== wiseWordId);
     await saveWiseWords(wiseWords);
 
