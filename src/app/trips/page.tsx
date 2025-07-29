@@ -4,7 +4,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { useActionState, useEffect, useState } from 'react';
-import { getSessionAction, getTrips, deleteTripAction } from '@/app/actions';
+import { getSessionAction, deleteTripAction, getTrips } from '@/app/actions';
 import { getUsers as getUsersClient } from '@/lib/data.client';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
@@ -185,3 +185,5 @@ export default function TripsPage() {
     </AppShell>
   );
 }
+
+    

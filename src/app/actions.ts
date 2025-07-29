@@ -4,7 +4,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
-import { getUsers, getEvents, saveEvents, getTrips, saveTrips, saveSettings, saveUsers, getLinks, saveLinks, getChatMessages, saveChatMessages, getMemories, saveMemories, getWiseWords as getWiseWordsData, saveWiseWords } from '@/lib/data';
+import { getUsers, getEvents, saveEvents, getTrips as getTripsData, saveTrips, saveSettings, saveUsers, getLinks, saveLinks, getChatMessages, saveChatMessages, getMemories, saveMemories, getWiseWords as getWiseWordsData, saveWiseWords } from '@/lib/data';
 import type { AppSettings, Event, Trip, UserAvailability, User, Link as LinkType, ChatMessage, Memory, WiseWord } from '@/lib/types';
 import * as ical from 'node-ical';
 
@@ -416,12 +416,16 @@ export async function createTripAction(formData: FormData) {
         costs: [],
     };
     
-    const trips = await getTrips();
+    const trips = await getTripsData();
     trips.push(newTrip);
     await saveTrips(trips);
 
     revalidatePath('/trips');
     redirect('/trips');
+}
+
+export async function getTrips() {
+    return await getTripsData();
 }
 
 export async function deleteTripAction(tripId: number) {
@@ -430,7 +434,7 @@ export async function deleteTripAction(tripId: number) {
         return { success: false, message: 'Unauthorized.' };
     }
 
-    const trips = await getTrips();
+    const trips = await getTripsData();
     const updatedTrips = trips.filter(t => t.id !== tripId);
     await saveTrips(updatedTrips);
     
@@ -466,7 +470,7 @@ export async function createEventFromTripAction(formData: FormData) {
         return { success: false, message: 'An event for this trip already exists.' };
     }
 
-    const allTrips = await getTrips();
+    const allTrips = await getTripsData();
     const trip = allTrips.find(t => t.id === tripId);
 
     if (!trip) {
@@ -512,7 +516,7 @@ export async function addItineraryItemAction(tripId: number, formData: FormData)
     if (!sessionUser || sessionUser.role === 'parent') {
        return { success: false, message: 'Unauthorized.' };
     }
-    const trips = await getTrips();
+    const trips = await getTripsData();
     const trip = trips.find(t => t.id === tripId);
 
     if (!trip) {
@@ -562,7 +566,7 @@ export async function addCostItemAction(tripId: number, formData: FormData) {
     if (!sessionUser || sessionUser.role === 'parent') {
        return;
     }
-    const trips = await getTrips();
+    const trips = await getTripsData();
     const trip = trips.find(t => t.id === tripId);
      if (!trip) {
         return;
@@ -588,7 +592,7 @@ export async function addTripSuggestionAction(tripId: number, formData: FormData
     const suggestion = formData.get('suggestion') as string;
     if (!suggestion) return;
 
-    const trips = await getTrips();
+    const trips = await getTripsData();
     const trip = trips.find(t => t.id === tripId);
 
     if (trip) {
@@ -1056,3 +1060,5 @@ export async function deleteMemoryCommentAction(memoryId: number, commentId: num
 export async function getSessionAction() {
   return await getSession();
 }
+
+    
