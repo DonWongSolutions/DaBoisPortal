@@ -121,6 +121,8 @@ function WorldMap({ locations }: { locations: Location[] }) {
                             <Geographies geography={geoUrl}>
                                 {({ geographies }) =>
                                     geographies.map((geo) => {
+                                        if (!geo.properties.iso_a2) return null;
+                                        
                                         const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2.toUpperCase());
                                         const countryVisits = locations.filter(l => l.countryCode.toUpperCase() === geo.properties.iso_a2.toUpperCase());
                                         
@@ -324,3 +326,5 @@ export default function MapPage() {
         </AppShell>
     );
 }
+
+    
