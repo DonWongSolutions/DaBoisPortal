@@ -4,19 +4,21 @@
 import { useEffect, useState, useActionState, useRef } from 'react';
 import { redirect } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { getSessionAction, addLocationAction, getLocationsAction } from '@/app/actions';
+import { getSessionAction, addLocationAction, getLocationsAction, deleteLocationAction } from '@/app/actions';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Location } from '@/lib/types';
 import { format } from 'date-fns';
-import { PlusCircle, Globe } from 'lucide-react';
+import { PlusCircle, Globe, Trash2 } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -81,7 +83,6 @@ function AddLocationForm() {
     );
 }
 
-
 function WorldMap({ locations }: { locations: Location[] }) {
     const visitedCountryCodes = [...new Set(locations.map(loc => loc.countryCode))];
     const cityLocations = locations.filter(loc => loc.latitude && loc.longitude);
@@ -90,15 +91,16 @@ function WorldMap({ locations }: { locations: Location[] }) {
          <Card className="overflow-hidden">
             <CardContent className="p-0">
                 <div className="w-full aspect-video">
-                    <ComposableMap projection="geoMercator">
-                        <ZoomableGroup center={[0, 20]} zoom={1}>
-                            <Geographies geography={geoUrl}>
-                                {({ geographies }) =>
-                                    geographies.map((geo) => {
-                                        const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2);
-                                        return (
-                                            <TooltipProvider key={geo.rsmKey}>
-                                                <Tooltip>
+                    <TooltipProvider>
+                        <ComposableMap projection="geoMercator">
+                            <ZoomableGroup center={[0, 20]} zoom={1}>
+                                <Geographies geography={geoUrl}>
+                                    {({ geographies }) =>
+                                        geographies.map((geo) => {
+                                            const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2);
+                                            const countryVisits = locations.filter(l => l.countryCode === geo.properties.iso_a2 && !l.cityName);
+                                            return (
+                                                <Tooltip key={geo.rsmKey}>
                                                     <TooltipTrigger asChild>
                                                         <Geography
                                                             geography={geo}
@@ -113,19 +115,17 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                                     </TooltipTrigger>
                                                     <TooltipContent>
                                                         <p className="font-bold">{geo.properties.name}</p>
-                                                        {locations.filter(l => l.countryCode === geo.properties.iso_a2 && !l.cityName).map(l => (
+                                                        {countryVisits.length > 0 && countryVisits.map(l => (
                                                              <p key={l.id} className="text-xs">{l.visitedBy} ({format(new Date(l.startDate), 'MMM yyyy')})</p>
                                                         ))}
                                                     </TooltipContent>
                                                 </Tooltip>
-                                            </TooltipProvider>
-                                        );
-                                    })
-                                }
-                            </Geographies>
-                            {cityLocations.map(loc => (
-                                 <TooltipProvider key={loc.id}>
-                                     <Tooltip>
+                                            );
+                                        })
+                                    }
+                                </Geographies>
+                                {cityLocations.map(loc => (
+                                     <Tooltip key={loc.id}>
                                          <TooltipTrigger asChild>
                                              <Marker coordinates={[loc.longitude!, loc.latitude!]}>
                                                 <circle r={3} fill="#E53E3E" stroke="#FFF" strokeWidth={1} />
@@ -133,23 +133,87 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                          </TooltipTrigger>
                                          <TooltipContent>
                                             <p className="font-bold">{loc.cityName}, {loc.countryName}</p>
-                                            <p className="text-xs">{loc.visitedBy} ({format(new Date(loc.startDate), 'MMM yyyy')} - {format(new Date(loc.endDate), 'MMM yyyy')})</p>
+                                            <p className="text-xs">{loc.visitedBy} ({format(new Date(l.startDate), 'MMM yyyy')} - {format(new Date(l.endDate), 'MMM yyyy')})</p>
                                          </TooltipContent>
                                      </Tooltip>
-                                 </TooltipProvider>
-                            ))}
-                        </ZoomableGroup>
-                    </ComposableMap>
+                                ))}
+                            </ZoomableGroup>
+                        </ComposableMap>
+                    </TooltipProvider>
                 </div>
             </CardContent>
         </Card>
     );
 }
 
+function LocationHistory({ locations, user, onDelete }: { locations: Location[], user: User, onDelete: (id: number) => void }) {
+    if (locations.length === 0) {
+        return <p className="text-muted-foreground text-center py-4">No locations have been logged yet.</p>
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Location History</CardTitle>
+            </CardHeader>
+            <CardContent>
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Country</TableHead>
+                            <TableHead>City</TableHead>
+                            <TableHead>Visitor</TableHead>
+                            <TableHead>Dates</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {locations.sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()).map(loc => {
+                             const canDelete = user.role === 'admin' || user.name === loc.visitedBy;
+                             return (
+                                <TableRow key={loc.id}>
+                                    <TableCell>{loc.countryName}</TableCell>
+                                    <TableCell>{loc.cityName || 'N/A'}</TableCell>
+                                    <TableCell>{loc.visitedBy}</TableCell>
+                                    <TableCell>{format(new Date(loc.startDate), 'PP')} - {format(new Date(loc.endDate), 'PP')}</TableCell>
+                                    <TableCell className="text-right">
+                                        {canDelete && (
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This will permanently delete this location record. This action cannot be undone.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => onDelete(loc.id)}>Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    )
+}
+
 export default function MapPage() {
     const [user, setUser] = useState<User | null>(null);
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
 
     const fetchLocations = async () => {
         try {
@@ -181,6 +245,16 @@ export default function MapPage() {
         const interval = setInterval(fetchLocations, 5000);
         return () => clearInterval(interval);
     }, []);
+    
+    const handleDeleteLocation = async (id: number) => {
+        const result = await deleteLocationAction(id);
+        if (result.success) {
+            toast({ title: 'Success', description: result.message });
+            fetchLocations(); // Refresh the list
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.message });
+        }
+    }
 
     if (loading) {
         return <div className="flex justify-center items-center h-full">Loading map...</div>;
@@ -201,8 +275,9 @@ export default function MapPage() {
             />
 
             <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-8">
                     <WorldMap locations={locations} />
+                    <LocationHistory locations={locations} user={user} onDelete={handleDeleteLocation} />
                 </div>
                 <div className="space-y-8">
                     <Card>

@@ -1116,6 +1116,34 @@ export async function addLocationAction(formData: FormData) {
     return { success: true, message: 'Location added!' };
 }
 
+export async function deleteLocationAction(locationId: number) {
+    const sessionUser = await getSession();
+    if (!sessionUser) {
+        return { success: false, message: 'Unauthorized' };
+    }
+
+    const locations = await getLocationsData();
+    const locationIndex = locations.findIndex(l => l.id === locationId);
+
+    if (locationIndex === -1) {
+        return { success: false, message: 'Location not found' };
+    }
+
+    const locationToDelete = locations[locationIndex];
+    const isOwner = locationToDelete.visitedBy === sessionUser.name;
+    const isAdmin = sessionUser.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+        return { success: false, message: 'You are not authorized to delete this record' };
+    }
+
+    locations.splice(locationIndex, 1);
+    await saveLocations(locations);
+
+    revalidatePath('/map');
+    return { success: true, message: 'Location record deleted.' };
+}
+
 
 export async function getSessionAction() {
   return await getSession();
