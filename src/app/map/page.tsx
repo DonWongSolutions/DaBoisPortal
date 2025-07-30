@@ -85,6 +85,17 @@ function AddLocationForm() {
 function WorldMap({ locations }: { locations: Location[] }) {
     const visitedCountryCodes = [...new Set(locations.map(loc => loc.countryCode.toUpperCase()))];
     const cityLocations = locations.filter(loc => loc.latitude && loc.longitude);
+
+    const uniqueCities = cityLocations.reduce((acc, current) => {
+        const key = `${current.cityName}-${current.countryCode}`;
+        if (!acc[key]) {
+            acc[key] = { ...current, visits: [] };
+        }
+        acc[key].visits.push(current);
+        return acc;
+    }, {} as Record<string, Location & { visits: Location[] }>);
+
+
     const [tooltipContent, setTooltipContent] = useState<string | null>(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
@@ -110,8 +121,8 @@ function WorldMap({ locations }: { locations: Location[] }) {
                             <Geographies geography={geoUrl}>
                                 {({ geographies }) =>
                                     geographies.map((geo) => {
-                                        const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2);
-                                        const countryVisits = locations.filter(l => l.countryCode.toUpperCase() === geo.properties.iso_a2);
+                                        const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2.toUpperCase());
+                                        const countryVisits = locations.filter(l => l.countryCode.toUpperCase() === geo.properties.iso_a2.toUpperCase());
                                         
                                         const countryTooltip = `
                                             <p class="font-bold">${geo.properties.name}</p>
@@ -139,15 +150,17 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                     })
                                 }
                             </Geographies>
-                             {cityLocations.map(loc => {
+                             {Object.values(uniqueCities).map(city => {
                                 const cityTooltip = `
-                                    <p class="font-bold">${loc.cityName}, ${loc.countryName}</p>
-                                    <p class="text-xs">${loc.visitedBy} (${format(new Date(loc.startDate), 'MMM yyyy')})</p>
+                                    <p class="font-bold">${city.cityName}, ${city.countryName}</p>
+                                    ${city.visits.map(visit => `
+                                        <p class="text-xs">${visit.visitedBy} (${format(new Date(visit.startDate), 'MMM yyyy')})</p>
+                                    `).join('')}
                                 `;
                                 return (
                                     <Marker 
-                                        key={loc.id} 
-                                        coordinates={[loc.longitude!, loc.latitude!]}
+                                        key={city.id} 
+                                        coordinates={[city.longitude!, city.latitude!]}
                                         onMouseEnter={() => setTooltipContent(cityTooltip)}
                                     >
                                         <circle r={3} fill="#E53E3E" stroke="#FFF" strokeWidth={1} />
@@ -311,9 +324,3 @@ export default function MapPage() {
         </AppShell>
     );
 }
-
-    
-
-    
-
-    

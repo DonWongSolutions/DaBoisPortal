@@ -31,5 +31,16 @@
     "startDate": "2024-05-20",
     "endDate": "2024-05-25",
     "visitedBy": "Don"
+  },
+  {
+    "id": 1753889998449,
+    "countryName": "Japan",
+    "countryCode": "JP",
+    "cityName": "Tokyo",
+    "latitude": 35.6895,
+    "longitude": 139.69171,
+    "startDate": "2024-02-14",
+    "endDate": "2024-02-19",
+    "visitedBy": "Don"
   }
 ]
