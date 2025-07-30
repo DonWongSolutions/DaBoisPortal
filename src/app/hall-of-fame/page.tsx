@@ -21,6 +21,7 @@ import type { User, WiseWord, WiseWordCategory } from '@/lib/types';
 import { PlusCircle, Quote, Trash2, ThumbsUp, Pin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function WiseWordDialog({ users, children }: { users: User[], children: React.ReactNode }) {
     const { toast } = useToast();
@@ -165,6 +166,7 @@ export default function HallOfFamePage() {
     const [wiseWords, setWiseWords] = useState<WiseWord[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const [activeTab, setActiveTab] = useState<WiseWordCategory | 'All'>('All');
 
     const fetchWisdom = async () => {
         const fetchedWords = await getWiseWords();
@@ -249,6 +251,10 @@ export default function HallOfFamePage() {
         }
         return b.upvotes.length - a.upvotes.length
     });
+
+    const filteredWords = activeTab === 'All'
+        ? sortedWiseWords
+        : sortedWiseWords.filter(word => word.category === activeTab);
     
     return (
         <AppShell user={user}>
@@ -263,9 +269,18 @@ export default function HallOfFamePage() {
                 )}
             </PageHeader>
             
-            {sortedWiseWords.length > 0 ? (
+            <Tabs defaultValue="All" onValueChange={(value) => setActiveTab(value as any)} className="mb-4">
+                <TabsList>
+                    <TabsTrigger value="All">All</TabsTrigger>
+                    <TabsTrigger value="Exotic">Exotic</TabsTrigger>
+                    <TabsTrigger value="Legendary">Legendary</TabsTrigger>
+                    <TabsTrigger value="Common">Common</TabsTrigger>
+                </TabsList>
+            </Tabs>
+            
+            {filteredWords.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {sortedWiseWords.map((word) => (
+                    {filteredWords.map((word) => (
                         <WiseWordCard 
                             key={word.id} 
                             wiseWord={word} 
@@ -280,9 +295,9 @@ export default function HallOfFamePage() {
             ) : (
                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
                     <Quote className="h-12 w-12 text-muted-foreground/50" />
-                    <h3 className="text-2xl font-bold tracking-tight mt-4">The Hall is Empty</h3>
-                    <p className="text-muted-foreground mb-4">
-                       Be the first to immortalize some wise words.
+                    <h3 className="text-2xl font-bold tracking-tight mt-4">No wise words found for this category.</h3>
+                     <p className="text-muted-foreground mb-4">
+                       Try a different filter or add a new wise word!
                     </p>
                     {user.role !== 'parent' && (
                          <WiseWordDialog users={members}>
