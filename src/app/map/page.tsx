@@ -16,7 +16,6 @@ import type { User, Location } from '@/lib/types';
 import { format } from 'date-fns';
 import { PlusCircle, Globe, Trash2 } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -86,60 +85,74 @@ function AddLocationForm() {
 function WorldMap({ locations }: { locations: Location[] }) {
     const visitedCountryCodes = [...new Set(locations.map(loc => loc.countryCode))];
     const cityLocations = locations.filter(loc => loc.latitude && loc.longitude);
+    const [tooltipContent, setTooltipContent] = useState<string | null>(null);
+    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+
+    const handleMouseMove = (e: React.MouseEvent<SVGElement>) => {
+        setTooltipPosition({ x: e.clientX, y: e.clientY });
+    };
 
     return (
-         <Card className="overflow-hidden">
-            <CardContent className="p-0">
-                <div className="w-full aspect-video">
-                    <TooltipProvider>
-                        <ComposableMap projection="geoMercator">
-                            <ZoomableGroup center={[0, 20]} zoom={1}>
-                                <Geographies geography={geoUrl}>
-                                    {({ geographies }) =>
-                                        geographies.map((geo) => {
-                                            const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2);
-                                            const countryVisits = locations.filter(l => l.countryCode === geo.properties.iso_a2 && !l.cityName);
-                                            return (
-                                                <Tooltip key={geo.rsmKey}>
-                                                    <TooltipTrigger asChild>
-                                                        <Geography
-                                                            geography={geo}
-                                                            fill={isVisited ? "#4682B4" : "#D6D6DA"}
-                                                            stroke="#FFF"
-                                                            style={{
-                                                                default: { outline: "none" },
-                                                                hover: { outline: "none", fill: isVisited ? "#3672a4" : "#C6C6DA" },
-                                                                pressed: { outline: "none" },
-                                                            }}
-                                                        />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p className="font-bold">{geo.properties.name}</p>
-                                                        {countryVisits.length > 0 && countryVisits.map(loc => (
-                                                             <p key={loc.id} className="text-xs">{loc.visitedBy} ({format(new Date(loc.startDate), 'MMM yyyy')})</p>
-                                                        ))}
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            );
-                                        })
-                                    }
-                                </Geographies>
-                                {cityLocations.map(loc => (
-                                     <Tooltip key={loc.id}>
-                                         <TooltipTrigger asChild>
-                                             <Marker coordinates={[loc.longitude!, loc.latitude!]}>
-                                                <circle r={3} fill="#E53E3E" stroke="#FFF" strokeWidth={1} />
-                                             </Marker>
-                                         </TooltipTrigger>
-                                         <TooltipContent>
-                                            <p className="font-bold">{loc.cityName}, {loc.countryName}</p>
-                                            <p className="text-xs">{loc.visitedBy} ({format(new Date(loc.startDate), 'MMM yyyy')} - {format(new Date(loc.endDate), 'MMM yyyy')})</p>
-                                         </TooltipContent>
-                                     </Tooltip>
-                                ))}
-                            </ZoomableGroup>
-                        </ComposableMap>
-                    </TooltipProvider>
+        <Card className="overflow-hidden">
+            <CardContent className="p-0 relative">
+                {tooltipContent && (
+                    <div
+                        className="absolute z-10 p-2 text-sm bg-black text-white rounded-md pointer-events-none"
+                        style={{ top: tooltipPosition.y + 10, left: tooltipPosition.x + 10, transform: 'translate(-50%, -100%)' }}
+                    >
+                        <div dangerouslySetInnerHTML={{ __html: tooltipContent }} />
+                    </div>
+                )}
+                <div className="w-full aspect-video" onMouseMove={handleMouseMove}>
+                    <ComposableMap projection="geoMercator">
+                        <ZoomableGroup center={[0, 20]} zoom={1}>
+                            <Geographies geography={geoUrl}>
+                                {({ geographies }) =>
+                                    geographies.map((geo) => {
+                                        const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2);
+                                        const countryVisits = locations.filter(l => l.countryCode === geo.properties.iso_a2 && !l.cityName);
+                                        
+                                        const countryTooltip = `
+                                            <p class="font-bold">${geo.properties.name}</p>
+                                            ${countryVisits.map(loc => `<p class="text-xs">${loc.visitedBy} (${format(new Date(loc.startDate), 'MMM yyyy')})</p>`).join('')}
+                                        `;
+
+                                        return (
+                                            <Geography
+                                                key={geo.rsmKey}
+                                                geography={geo}
+                                                fill={isVisited ? "#4682B4" : "#D6D6DA"}
+                                                stroke="#FFF"
+                                                onMouseEnter={() => setTooltipContent(countryTooltip)}
+                                                onMouseLeave={() => setTooltipContent(null)}
+                                                style={{
+                                                    default: { outline: "none" },
+                                                    hover: { outline: "none", fill: isVisited ? "#3672a4" : "#C6C6DA" },
+                                                    pressed: { outline: "none" },
+                                                }}
+                                            />
+                                        );
+                                    })
+                                }
+                            </Geographies>
+                            {cityLocations.map(loc => {
+                                const cityTooltip = `
+                                    <p class="font-bold">${loc.cityName}, ${loc.countryName}</p>
+                                    <p class="text-xs">${loc.visitedBy} (${format(new Date(loc.startDate), 'MMM yyyy')} - ${format(new Date(loc.endDate), 'MMM yyyy')})</p>
+                                `;
+                                return (
+                                    <Marker 
+                                        key={loc.id} 
+                                        coordinates={[loc.longitude!, loc.latitude!]}
+                                        onMouseEnter={() => setTooltipContent(cityTooltip)}
+                                        onMouseLeave={() => setTooltipContent(null)}
+                                    >
+                                        <circle r={3} fill="#E53E3E" stroke="#FFF" strokeWidth={1} />
+                                    </Marker>
+                                )
+                            })}
+                        </ZoomableGroup>
+                    </ComposableMap>
                 </div>
             </CardContent>
         </Card>
@@ -295,3 +308,5 @@ export default function MapPage() {
         </AppShell>
     );
 }
+
+    
