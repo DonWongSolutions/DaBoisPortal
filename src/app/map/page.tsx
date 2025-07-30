@@ -88,8 +88,9 @@ function WorldMap({ locations }: { locations: Location[] }) {
     const [tooltipContent, setTooltipContent] = useState<string | null>(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
-    const handleMouseMove = (e: React.MouseEvent<SVGElement>) => {
-        setTooltipPosition({ x: e.clientX, y: e.clientY });
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setTooltipPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     };
 
     return (
@@ -98,12 +99,12 @@ function WorldMap({ locations }: { locations: Location[] }) {
                 {tooltipContent && (
                     <div
                         className="absolute z-10 p-2 text-sm bg-black text-white rounded-md pointer-events-none"
-                        style={{ top: tooltipPosition.y + 10, left: tooltipPosition.x + 10, transform: 'translate(-50%, -100%)' }}
+                        style={{ top: tooltipPosition.y, left: tooltipPosition.x, transform: 'translate(10px, -100%)' }}
                     >
                         <div dangerouslySetInnerHTML={{ __html: tooltipContent }} />
                     </div>
                 )}
-                <div className="w-full aspect-video" onMouseMove={handleMouseMove}>
+                <div className="w-full aspect-video" onMouseMove={handleMouseMove} onMouseLeave={() => setTooltipContent(null)}>
                     <ComposableMap projection="geoMercator">
                         <ZoomableGroup center={[0, 20]} zoom={1}>
                             <Geographies geography={geoUrl}>
@@ -128,7 +129,6 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                                 fill={isVisited ? "#4682B4" : "#D6D6DA"}
                                                 stroke="#FFF"
                                                 onMouseEnter={() => { if(isVisited) setTooltipContent(countryTooltip)}}
-                                                onMouseLeave={() => setTooltipContent(null)}
                                                 style={{
                                                     default: { outline: "none" },
                                                     hover: { outline: "none", fill: isVisited ? "#3672a4" : "#C6C6DA" },
@@ -140,10 +140,15 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                 }
                             </Geographies>
                              {cityLocations.map(loc => {
+                                const cityTooltip = `
+                                    <p class="font-bold">${loc.cityName}, ${loc.countryName}</p>
+                                    <p class="text-xs">${loc.visitedBy} (${format(new Date(loc.startDate), 'MMM yyyy')})</p>
+                                `;
                                 return (
                                     <Marker 
                                         key={loc.id} 
                                         coordinates={[loc.longitude!, loc.latitude!]}
+                                        onMouseEnter={() => setTooltipContent(cityTooltip)}
                                     >
                                         <circle r={3} fill="#E53E3E" stroke="#FFF" strokeWidth={1} />
                                     </Marker>
@@ -306,5 +311,7 @@ export default function MapPage() {
         </AppShell>
     );
 }
+
+    
 
     
