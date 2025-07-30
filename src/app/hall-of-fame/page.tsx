@@ -93,13 +93,23 @@ const categoryColors: Record<WiseWordCategory, string> = {
     "Common": "border-gray-300 dark:border-gray-700",
 }
 
-function WiseWordCard({ wiseWord, user, onVote, onDelete, onPin, onCategoryChange }: { wiseWord: WiseWord, user: User, onVote: (id: number) => void, onDelete: (id: number) => void, onPin: (id: number) => void, onCategoryChange: (id: number, category: WiseWordCategory) => void }) {
+const podiumColors = [
+    "border-yellow-400 bg-yellow-100 dark:bg-yellow-950", // Gold
+    "border-gray-400 bg-gray-100 dark:bg-gray-800", // Silver
+    "border-orange-400 bg-orange-100 dark:bg-orange-950", // Bronze
+]
+
+function WiseWordCard({ wiseWord, user, onVote, onDelete, onPin, onCategoryChange, podiumPlace }: { wiseWord: WiseWord, user: User, onVote: (id: number) => void, onDelete: (id: number) => void, onPin: (id: number) => void, onCategoryChange: (id: number, category: WiseWordCategory) => void, podiumPlace?: number }) {
     const hasVoted = wiseWord.upvotes.includes(user.id);
     const canManage = user.role !== 'parent';
     const canDelete = user.role === 'admin';
 
+    const cardClass = podiumPlace !== undefined && podiumPlace < 3 
+        ? podiumColors[podiumPlace]
+        : categoryColors[wiseWord.category];
+
     return (
-        <Card className={cn("relative flex flex-col transition-all border-2", categoryColors[wiseWord.category])}>
+        <Card className={cn("relative flex flex-col transition-all border-2", cardClass)}>
             <CardContent className="pt-6 flex-grow">
                 <blockquote className="space-y-2">
                     <p className="text-lg font-semibold italic">"{wiseWord.phrase}"</p>
@@ -245,11 +255,11 @@ export default function HallOfFamePage() {
     }
     
     const sortedWiseWords = [...wiseWords].sort((a, b) => {
-        const categoryOrder = { Exotic: 0, Legendary: 1, Common: 2 };
-        if (categoryOrder[a.category] !== categoryOrder[b.category]) {
-            return categoryOrder[a.category] - categoryOrder[b.category];
+        if (b.upvotes.length !== a.upvotes.length) {
+            return b.upvotes.length - a.upvotes.length;
         }
-        return b.upvotes.length - a.upvotes.length
+        const categoryOrder = { Exotic: 0, Legendary: 1, Common: 2 };
+        return categoryOrder[a.category] - categoryOrder[b.category];
     });
 
     const filteredWords = activeTab === 'All'
@@ -280,7 +290,7 @@ export default function HallOfFamePage() {
             
             {filteredWords.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredWords.map((word) => (
+                    {filteredWords.map((word, index) => (
                         <WiseWordCard 
                             key={word.id} 
                             wiseWord={word} 
@@ -289,6 +299,7 @@ export default function HallOfFamePage() {
                             onDelete={handleDelete}
                             onPin={handlePin}
                             onCategoryChange={handleCategoryChange}
+                            podiumPlace={activeTab === 'All' ? index : undefined}
                         />
                     ))}
                 </div>
