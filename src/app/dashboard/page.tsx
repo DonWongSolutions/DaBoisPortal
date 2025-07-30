@@ -42,8 +42,12 @@ function PinnedQuotes({ wiseWords }: { wiseWords: WiseWord[] }) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {wiseWords.map(word => (
-                        <blockquote key={word.id} className="border-l-2 pl-4 italic text-sm">
-                           "{word.phrase}" ~ {word.author}
+                        <blockquote key={word.id} className="border-l-2 pl-4 italic">
+                           <p>"{word.phrase}"</p>
+                           <footer className="text-sm text-muted-foreground not-italic mt-1">
+                             ~ {word.author}
+                             {word.context && ` (${word.context})`}
+                           </footer>
                         </blockquote>
                     ))}
                 </CardContent>
