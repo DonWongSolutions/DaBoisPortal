@@ -1,24 +1,95 @@
+
 [
   {
+    "id": 1753836921496,
+    "phrase": "開寶船",
+    "author": "Isaac",
+    "context": "Shenzhen Trip 2025 - Round One",
+    "addedBy": "Don",
+    "upvotes": [],
+    "pinned": true,
+    "category": "Common"
+  },
+  {
+    "id": 1753836994137,
+    "phrase": "APARY",
+    "author": "Isaac",
+    "context": "9th July, 2025",
+    "addedBy": "Don",
+    "upvotes": [],
+    "pinned": false,
+    "category": "Common"
+  },
+  {
+    "id": 1753837024018,
+    "phrase": "The deaths are just 🤌",
+    "author": "Isaac",
+    "context": "28th June, 2025",
+    "addedBy": "Don",
+    "upvotes": [],
+    "pinned": false,
+    "category": "Common"
+  },
+  {
+    "id": 1753837048677,
+    "phrase": "If somebody dies it’s good",
+    "author": "Isaac",
+    "context": "27th June, 2025",
+    "addedBy": "Don",
+    "upvotes": [],
+    "pinned": false,
+    "category": "Common"
+  },
+  {
+    "id": 1753851772308,
+    "phrase": "TBAF",
+    "author": "Don",
+    "context": "In confusion - from Isaac and Nathan’s nonsense",
+    "addedBy": "Don",
+    "upvotes": [],
+    "pinned": false,
+    "category": "Common"
+  },
+  {
+    "id": 1753851819141,
+    "phrase": "Methane or something",
+    "author": "Nathan",
+    "context": "Discussing about the atmosphere",
+    "addedBy": "Don",
+    "upvotes": [],
+    "pinned": false,
+    "category": "Common"
+  },
+  {
+    "id": 1753851875177,
+    "phrase": "I uses",
+    "author": "Isaac",
+    "context": "15th January, 2025",
+    "addedBy": "Don",
+    "upvotes": [],
+    "pinned": false,
+    "category": "Common"
+  },
+  {
+    "id": 1753851950009,
+    "phrase": "Now we're old and foolish!",
+    "author": "Nathan",
+    "context": "Remembering the past",
+    "addedBy": "Don",
     "upvotes": [
       1
     ],
-    "pinned": true,
-    "category": "Common",
-    "id": 1753818304918,
-    "phrase": "I am an egg",
-    "author": "Xavier",
-    "context": "on a random trip",
-    "addedBy": "Don"
+    "pinned": false,
+    "category": "Common"
   },
   {
+    "id": 1753871520533,
+    "phrase": "So just like one last hole",
+    "author": "Isaac",
+    "context": "30th July, 2025",
+    "addedBy": "Don",
     "upvotes": [],
     "pinned": false,
-    "category": "Common",
-    "id": 1753818322630,
-    "phrase": "This is a test phrase",
-    "author": "Isaac",
-    "context": "during testing",
-    "addedBy": "Don"
+    "category": "Common"
   }
 ]
