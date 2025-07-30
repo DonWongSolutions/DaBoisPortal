@@ -4,10 +4,10 @@
     "name": "Don",
     "password": "Frank",
     "role": "admin",
-    "age": 28,
-    "birthday": "1996-05-10",
-    "phone": "123-456-7890",
-    "email": "don@dabois.com",
+    "age": 14,
+    "birthday": "2011-05-27",
+    "phone": "5544 5275",
+    "email": "don.wong@roboconoxon.org.uk",
     "profilePictureUrl": "",
     "forceInfoUpdate": false,
     "forcePasswordChange": false
@@ -19,8 +19,8 @@
     "role": "member",
     "age": 14,
     "birthday": "2011-07-19",
-    "phone": "234-567-momo",
-    "email": "kokoko@j.om",
+    "phone": "6903 2737",
+    "email": "lauchihei@gmail.com",
     "profilePictureUrl": "",
     "forceInfoUpdate": true,
     "forcePasswordChange": true
@@ -32,11 +32,11 @@
     "role": "member",
     "age": 28,
     "birthday": "1996-03-22",
-    "phone": "345-678-9012",
-    "email": "xavier@dabois.com",
+    "phone": "9541 5006",
+    "email": "ngparkyin@dabois.hk",
     "profilePictureUrl": "",
-    "forceInfoUpdate": false,
-    "forcePasswordChange": false
+    "forceInfoUpdate": true,
+    "forcePasswordChange": true
   },
   {
     "id": 4,
@@ -45,11 +45,11 @@
     "role": "member",
     "age": 26,
     "birthday": "1998-11-30",
-    "phone": "456-789-0123",
-    "email": "nathan@dabois.com",
+    "phone": "6494 3527",
+    "email": "tsemanshun@dabois.hk",
     "profilePictureUrl": "",
-    "forceInfoUpdate": false,
-    "forcePasswordChange": false
+    "forceInfoUpdate": true,
+    "forcePasswordChange": true
   },
   {
     "id": 5,
@@ -58,8 +58,8 @@
     "role": "parent",
     "age": 55,
     "birthday": "1969-01-01",
-    "phone": "555-555-5555",
-    "email": "dad@dabois.com",
+    "phone": "0000 0000",
+    "email": "parents@dabois.hk",
     "profilePictureUrl": "",
     "forceInfoUpdate": false,
     "forcePasswordChange": false
