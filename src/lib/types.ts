@@ -113,6 +113,8 @@ export interface Memory {
   comments: MemoryComment[];
 }
 
+export type WiseWordCategory = 'Exotic' | 'Legendary' | 'Common';
+
 export interface WiseWord {
   id: number;
   phrase: string;
@@ -121,4 +123,17 @@ export interface WiseWord {
   addedBy: string;
   upvotes: number[];
   pinned: boolean;
+  category: WiseWordCategory;
+}
+
+export interface Location {
+    id: number;
+    countryName: string;
+    countryCode: string; // ISO 3166-1 alpha-2
+    cityName?: string;
+    latitude?: number;
+    longitude?: number;
+    startDate: string;
+    endDate: string;
+    visitedBy: string;
 }

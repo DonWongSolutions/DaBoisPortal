@@ -40,6 +40,7 @@ import {
   Link as LinkIcon,
   Camera,
   Quote,
+  Map,
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 
@@ -51,6 +52,7 @@ const navItems = [
   { href: '/linkboard', label: 'Link Board', icon: LinkIcon, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/memories', label: 'Memories', icon: Camera, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/hall-of-fame', label: 'Hall of Fame', icon: Quote, allowedRoles: ['admin', 'member', 'parent'] },
+  { href: '/map', label: 'World Map', icon: Map, allowedRoles: ['admin', 'member', 'parent'] },
 ];
 
 function UserMenu({ user }: { user: User }) {

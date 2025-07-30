@@ -3,7 +3,7 @@
 import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
-import type { User, Event, Trip, AppSettings, Link, ChatMessage, Memory, WiseWord } from './types';
+import type { User, Event, Trip, AppSettings, Link, ChatMessage, Memory, WiseWord, Location } from './types';
 
 const dataPath = path.join(process.cwd(), 'data');
 
@@ -175,9 +175,24 @@ export async function saveMemories(memories: Memory[]): Promise<void> {
 }
 
 export async function getWiseWords(): Promise<WiseWord[]> {
-    return readJsonFile<WiseWord[]>('wiseWords.json', []);
+    const words = await readJsonFile<WiseWord[]>('wiseWords.json', []);
+    // Ensure all words have the new fields
+    return words.map(word => ({
+        upvotes: [],
+        pinned: false,
+        category: 'Common',
+        ...word
+    }));
 }
 
 export async function saveWiseWords(wiseWords: WiseWord[]): Promise<void> {
     await writeJsonFile('wiseWords.json', wiseWords);
+}
+
+export async function getLocations(): Promise<Location[]> {
+    return readJsonFile<Location[]>('locations.json', []);
+}
+
+export async function saveLocations(locations: Location[]): Promise<void> {
+    await writeJsonFile('locations.json', locations);
 }

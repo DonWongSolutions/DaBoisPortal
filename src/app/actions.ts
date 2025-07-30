@@ -4,9 +4,10 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
-import { getUsers, getEvents, saveEvents, getTrips as getTripsData, saveTrips, saveSettings, saveUsers, getLinks, saveLinks, getChatMessages, saveChatMessages, getMemories, saveMemories, getWiseWords as getWiseWordsData, saveWiseWords } from '@/lib/data';
-import type { AppSettings, Event, Trip, UserAvailability, User, Link as LinkType, ChatMessage, Memory, WiseWord } from '@/lib/types';
+import { getUsers, getEvents, saveEvents, getTrips as getTripsData, saveTrips, saveSettings, saveUsers, getLinks, saveLinks, getChatMessages, saveChatMessages, getMemories, saveMemories, getWiseWords as getWiseWordsData, saveWiseWords, getLocations as getLocationsData, saveLocations } from '@/lib/data';
+import type { AppSettings, Event, Trip, UserAvailability, User, Link as LinkType, ChatMessage, Memory, WiseWord, Location, WiseWordCategory } from '@/lib/types';
 import * as ical from 'node-ical';
+import { geocode } from '@/services/geocoding';
 
 
 export async function loginAction(prevState: any, formData: FormData) {
@@ -811,6 +812,7 @@ export async function createWiseWordAction(formData: FormData) {
         addedBy: sessionUser.name,
         upvotes: [],
         pinned: false,
+        category: 'Common',
     };
 
     const wiseWords = await getWiseWordsData();
@@ -878,22 +880,33 @@ export async function pinWiseWordAction(wiseWordId: number) {
     }
 
     // Toggle the pinned state
-    const newPinnedState = !wiseWordToPin.pinned;
-
-    // Unpin all other words if we are pinning a new one
-    if (newPinnedState) {
-        wiseWords.forEach(ww => {
-            ww.pinned = false;
-        });
-    }
-
-    wiseWordToPin.pinned = newPinnedState;
+    wiseWordToPin.pinned = !wiseWordToPin.pinned;
 
     await saveWiseWords(wiseWords);
     revalidatePath('/hall-of-fame');
+    revalidatePath('/login');
+    revalidatePath('/dashboard');
     return { success: true };
 }
 
+export async function updateWiseWordCategoryAction(wiseWordId: number, category: WiseWordCategory) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role === 'parent') {
+        return { success: false, message: 'Unauthorized.' };
+    }
+    
+    const wiseWords = await getWiseWordsData();
+    const wiseWord = wiseWords.find(ww => ww.id === wiseWordId);
+    if (!wiseWord) {
+        return { success: false, message: 'Wise word not found.' };
+    }
+
+    wiseWord.category = category;
+    await saveWiseWords(wiseWords);
+
+    revalidatePath('/hall-of-fame');
+    return { success: true, message: 'Category updated.' };
+}
 
 export async function getMemoriesAction() {
     return (await getMemories()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -1056,9 +1069,54 @@ export async function deleteMemoryCommentAction(memoryId: number, commentId: num
     return { success: true, message: 'Comment deleted.' };
 }
 
+export async function getLocationsAction() {
+    return await getLocationsData();
+}
+
+export async function addLocationAction(formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role === 'parent') {
+        return { success: false, message: 'Unauthorized' };
+    }
+
+    const countryName = formData.get('countryName') as string;
+    const countryCode = formData.get('countryCode') as string;
+    const cityName = formData.get('cityName') as string | undefined;
+    
+    let lat: number | undefined;
+    let lon: number | undefined;
+
+    if (cityName) {
+        const coords = await geocode(cityName, countryCode);
+        if (coords) {
+            lat = coords.latitude;
+            lon = coords.longitude;
+        } else {
+            return { success: false, message: `Could not find coordinates for city: ${cityName}` };
+        }
+    }
+
+    const newLocation: Location = {
+        id: Date.now(),
+        countryName,
+        countryCode,
+        cityName,
+        latitude: lat,
+        longitude: lon,
+        startDate: formData.get('startDate') as string,
+        endDate: formData.get('endDate') as string,
+        visitedBy: sessionUser.name,
+    };
+
+    const locations = await getLocationsData();
+    locations.push(newLocation);
+    await saveLocations(locations);
+
+    revalidatePath('/map');
+    return { success: true, message: 'Location added!' };
+}
+
 
 export async function getSessionAction() {
   return await getSession();
 }
-
-    

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getSession } from '@/lib/auth';
-import { getEvents, getSettings, getTrips, getUsers } from '@/lib/data';
+import { getEvents, getSettings, getTrips, getUsers, getWiseWords } from '@/lib/data';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -11,8 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Check, Mail, Phone, Cake, Users, Plane, Calendar, ChevronsRight, Gift } from 'lucide-react';
-import type { User } from '@/lib/types';
+import { Check, Mail, Phone, Cake, Users, Plane, Calendar, ChevronsRight, Gift, Pin } from 'lucide-react';
+import type { User, WiseWord } from '@/lib/types';
 import { differenceInDays, format, nextDay } from 'date-fns';
 
 function getNextBirthday(birthday: string) {
@@ -28,6 +28,29 @@ function getNextBirthday(birthday: string) {
     return nextBirthday;
 }
 
+function PinnedQuotes({ wiseWords }: { wiseWords: WiseWord[] }) {
+    if (wiseWords.length === 0) return null;
+
+    return (
+        <div className="md:hidden mb-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                        <Pin className="h-5 w-5" />
+                        Pinned Words of Wisdom
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {wiseWords.map(word => (
+                        <blockquote key={word.id} className="border-l-2 pl-4 italic text-sm">
+                           "{word.phrase}" ~ {word.author}
+                        </blockquote>
+                    ))}
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
 
 export default async function DashboardPage() {
   const user = await getSession();
@@ -39,6 +62,9 @@ export default async function DashboardPage() {
   const allEvents = await getEvents();
   const allTrips = await getTrips();
   const allUsers = await getUsers();
+  const allWiseWords = await getWiseWords();
+
+  const pinnedWiseWords = allWiseWords.filter(w => w.pinned);
   
   const memberUsers = allUsers.filter(u => u.role === 'member');
   const upcomingBirthdays = memberUsers.map(u => {
@@ -96,6 +122,8 @@ export default async function DashboardPage() {
       </div>
       
       <div className="space-y-8">
+        <PinnedQuotes wiseWords={pinnedWiseWords} />
+
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           <div className="lg:col-span-1 space-y-8">
             <Card>

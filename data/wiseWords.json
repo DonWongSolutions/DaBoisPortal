@@ -1,1 +1,25 @@
-[]
+
+[
+  {
+    "id": 1753818304918,
+    "phrase": "I am an egg",
+    "author": "Xavier",
+    "context": "on a random trip",
+    "addedBy": "Don",
+    "upvotes": [
+      1
+    ],
+    "pinned": true,
+    "category": "Exotic"
+  },
+  {
+    "id": 1753818322630,
+    "phrase": "This is a test phrase",
+    "author": "Isaac",
+    "context": "during testing",
+    "addedBy": "Don",
+    "upvotes": [],
+    "pinned": false,
+    "category": "Common"
+  }
+]

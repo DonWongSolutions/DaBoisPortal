@@ -4,12 +4,12 @@
 import { useEffect, useState, useActionState, useRef } from 'react';
 import { redirect } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { getSessionAction, getWiseWords, createWiseWordAction, deleteWiseWordAction, upvoteWiseWordAction, pinWiseWordAction } from '@/app/actions';
+import { getSessionAction, getWiseWords, createWiseWordAction, deleteWiseWordAction, upvoteWiseWordAction, pinWiseWordAction, updateWiseWordCategoryAction } from '@/app/actions';
 import { getUsers } from '@/lib/data.client';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import type { User, WiseWord } from '@/lib/types';
+import type { User, WiseWord, WiseWordCategory } from '@/lib/types';
 import { PlusCircle, Quote, Trash2, ThumbsUp, Pin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -86,17 +86,19 @@ function WiseWordDialog({ users, children }: { users: User[], children: React.Re
     );
 }
 
-function WiseWordCard({ wiseWord, user, canDelete, onVote, onDelete, onPin, rank }: { wiseWord: WiseWord, user: User, canDelete: boolean, onVote: (id: number) => void, onDelete: (id: number) => void, onPin: (id: number) => void, rank?: number }) {
-    const hasVoted = wiseWord.upvotes.includes(user.id);
+const categoryColors: Record<WiseWordCategory, string> = {
+    "Exotic": "border-amber-400 bg-amber-50 dark:bg-amber-950",
+    "Legendary": "border-violet-400 bg-violet-50 dark:bg-violet-950",
+    "Common": "border-gray-300 dark:border-gray-700",
+}
 
-    const rankClasses = [
-        "bg-yellow-100 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700", // Gold
-        "bg-slate-200 dark:bg-slate-700/30 border-slate-300 dark:border-slate-600", // Silver
-        "bg-orange-200 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700" // Bronze
-    ];
+function WiseWordCard({ wiseWord, user, onVote, onDelete, onPin, onCategoryChange }: { wiseWord: WiseWord, user: User, onVote: (id: number) => void, onDelete: (id: number) => void, onPin: (id: number) => void, onCategoryChange: (id: number, category: WiseWordCategory) => void }) {
+    const hasVoted = wiseWord.upvotes.includes(user.id);
+    const canManage = user.role !== 'parent';
+    const canDelete = user.role === 'admin';
 
     return (
-        <Card className={cn("relative flex flex-col", rank && rank <= 3 && rankClasses[rank-1])}>
+        <Card className={cn("relative flex flex-col transition-all border-2", categoryColors[wiseWord.category])}>
             <CardContent className="pt-6 flex-grow">
                 <blockquote className="space-y-2">
                     <p className="text-lg font-semibold italic">"{wiseWord.phrase}"</p>
@@ -106,19 +108,34 @@ function WiseWordCard({ wiseWord, user, canDelete, onVote, onDelete, onPin, rank
                 </blockquote>
             </CardContent>
             <Separator />
-            <div className="p-4 flex justify-between items-center">
-                 <Button variant={hasVoted ? "default" : "outline"} size="sm" onClick={() => onVote(wiseWord.id)}>
+            <div className="p-4 flex justify-between items-center gap-2">
+                 <Button variant={hasVoted ? "default" : "outline"} size="sm" onClick={() => onVote(wiseWord.id)} disabled={!canManage}>
                     <ThumbsUp className="mr-2 h-4 w-4" /> {wiseWord.upvotes.length}
                  </Button>
-                 {canDelete && (
-                     <div className="flex gap-2">
-                         <Button variant="ghost" size="sm" onClick={() => onPin(wiseWord.id)}>
-                            <Pin className={cn("mr-2 h-4 w-4", wiseWord.pinned && "fill-primary text-primary")} /> Pin
+                 <div className="flex gap-2 items-center">
+                    <Select 
+                        defaultValue={wiseWord.category}
+                        onValueChange={(value) => onCategoryChange(wiseWord.id, value as WiseWordCategory)}
+                        disabled={!canManage}
+                    >
+                        <SelectTrigger className="text-xs h-9 w-[120px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Common">Common</SelectItem>
+                            <SelectItem value="Legendary">Legendary</SelectItem>
+                            <SelectItem value="Exotic">Exotic</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    {canDelete && (
+                        <>
+                         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => onPin(wiseWord.id)}>
+                            <Pin className={cn("h-4 w-4", wiseWord.pinned && "fill-primary text-primary")} />
                          </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 h-9 w-9">
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -134,27 +151,10 @@ function WiseWordCard({ wiseWord, user, canDelete, onVote, onDelete, onPin, rank
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                    </div>
-                )}
+                        </>
+                    )}
+                </div>
             </div>
-        </Card>
-    )
-}
-
-function PinnedBanner({ wiseWord }: { wiseWord: WiseWord }) {
-    return (
-        <Card className="mb-8 border-primary border-2">
-             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg text-primary"><Pin className="h-5 w-5 fill-primary" /> Pinned Quote</CardTitle>
-            </CardHeader>
-            <CardContent>
-                 <blockquote className="space-y-2">
-                    <p className="text-2xl font-semibold italic">"{wiseWord.phrase}"</p>
-                    <footer className="text-md text-muted-foreground">
-                        ~ Wise words from {wiseWord.author}{wiseWord.context ? `, ${wiseWord.context}`: ''}
-                    </footer>
-                </blockquote>
-            </CardContent>
         </Card>
     )
 }
@@ -192,9 +192,8 @@ export default function HallOfFamePage() {
         fetchData();
     }, []);
     
-    // Poll for updates
     useEffect(() => {
-        const interval = setInterval(fetchWisdom, 2000); 
+        const interval = setInterval(fetchWisdom, 5000); 
         return () => clearInterval(interval);
     }, []);
 
@@ -202,6 +201,7 @@ export default function HallOfFamePage() {
         const result = await deleteWiseWordAction(id);
         if (result.success) {
             toast({ title: 'Success', description: result.message });
+            fetchWisdom();
         } else {
              toast({ variant: 'destructive', title: 'Error', description: result.message });
         }
@@ -211,6 +211,8 @@ export default function HallOfFamePage() {
         const result = await upvoteWiseWordAction(id);
         if (!result.success) {
              toast({ variant: 'destructive', title: 'Error', description: result.message });
+        } else {
+            fetchWisdom();
         }
     };
 
@@ -218,8 +220,19 @@ export default function HallOfFamePage() {
         const result = await pinWiseWordAction(id);
         if (!result.success) {
              toast({ variant: 'destructive', title: 'Error', description: result.message });
+        } else {
+            fetchWisdom();
         }
     };
+
+    const handleCategoryChange = async (id: number, category: WiseWordCategory) => {
+        const result = await updateWiseWordCategoryAction(id, category);
+        if (!result.success) {
+             toast({ variant: 'destructive', title: 'Error', description: result.message });
+        } else {
+            fetchWisdom();
+        }
+    }
 
 
     if (loading) {
@@ -229,8 +242,13 @@ export default function HallOfFamePage() {
         return <div>Redirecting...</div>
     }
     
-    const sortedWiseWords = [...wiseWords].sort((a, b) => b.upvotes.length - a.upvotes.length);
-    const pinnedWord = wiseWords.find(ww => ww.pinned);
+    const sortedWiseWords = [...wiseWords].sort((a, b) => {
+        const categoryOrder = { Exotic: 0, Legendary: 1, Common: 2 };
+        if (categoryOrder[a.category] !== categoryOrder[b.category]) {
+            return categoryOrder[a.category] - categoryOrder[b.category];
+        }
+        return b.upvotes.length - a.upvotes.length
+    });
     
     return (
         <AppShell user={user}>
@@ -245,20 +263,17 @@ export default function HallOfFamePage() {
                 )}
             </PageHeader>
             
-            {pinnedWord && <PinnedBanner wiseWord={pinnedWord} />}
-            
             {sortedWiseWords.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {sortedWiseWords.map((word, index) => (
+                    {sortedWiseWords.map((word) => (
                         <WiseWordCard 
                             key={word.id} 
                             wiseWord={word} 
                             user={user}
-                            canDelete={user.role === 'admin'} 
                             onVote={handleVote}
                             onDelete={handleDelete}
                             onPin={handlePin}
-                            rank={index + 1}
+                            onCategoryChange={handleCategoryChange}
                         />
                     ))}
                 </div>
