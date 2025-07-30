@@ -83,7 +83,7 @@ function AddLocationForm() {
 }
 
 function WorldMap({ locations }: { locations: Location[] }) {
-    const visitedCountryCodes = [...new Set(locations.map(loc => loc.countryCode))];
+    const visitedCountryCodes = [...new Set(locations.map(loc => loc.countryCode.toUpperCase()))];
     const cityLocations = locations.filter(loc => loc.latitude && loc.longitude);
     const [tooltipContent, setTooltipContent] = useState<string | null>(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -95,7 +95,7 @@ function WorldMap({ locations }: { locations: Location[] }) {
 
     return (
         <Card className="overflow-hidden">
-            <CardContent className="p-0 relative">
+            <CardContent className="p-0 relative" onMouseMove={handleMouseMove} onMouseLeave={() => setTooltipContent(null)}>
                 {tooltipContent && (
                     <div
                         className="absolute z-10 p-2 text-sm bg-black text-white rounded-md pointer-events-none"
@@ -104,14 +104,14 @@ function WorldMap({ locations }: { locations: Location[] }) {
                         <div dangerouslySetInnerHTML={{ __html: tooltipContent }} />
                     </div>
                 )}
-                <div className="w-full aspect-video" onMouseMove={handleMouseMove} onMouseLeave={() => setTooltipContent(null)}>
+                <div className="w-full aspect-video">
                     <ComposableMap projection="geoMercator">
                         <ZoomableGroup center={[0, 20]} zoom={1}>
                             <Geographies geography={geoUrl}>
                                 {({ geographies }) =>
                                     geographies.map((geo) => {
                                         const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2);
-                                        const countryVisits = locations.filter(l => l.countryCode === geo.properties.iso_a2);
+                                        const countryVisits = locations.filter(l => l.countryCode.toUpperCase() === geo.properties.iso_a2);
                                         
                                         const countryTooltip = `
                                             <p class="font-bold">${geo.properties.name}</p>
@@ -280,7 +280,7 @@ export default function MapPage() {
     }
 
     const totalCountries = 195; // Approximate number of countries
-    const visitedCount = new Set(locations.map(l => l.countryCode)).size;
+    const visitedCount = new Set(locations.map(l => l.countryCode.toUpperCase())).size;
     const exploredPercentage = ((visitedCount / totalCountries) * 100).toFixed(1);
 
     return (
@@ -311,6 +311,8 @@ export default function MapPage() {
         </AppShell>
     );
 }
+
+    
 
     
 
