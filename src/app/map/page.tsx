@@ -110,11 +110,15 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                 {({ geographies }) =>
                                     geographies.map((geo) => {
                                         const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2);
-                                        const countryVisits = locations.filter(l => l.countryCode === geo.properties.iso_a2 && !l.cityName);
+                                        const countryVisits = locations.filter(l => l.countryCode === geo.properties.iso_a2);
                                         
                                         const countryTooltip = `
                                             <p class="font-bold">${geo.properties.name}</p>
-                                            ${countryVisits.map(loc => `<p class="text-xs">${loc.visitedBy} (${format(new Date(loc.startDate), 'MMM yyyy')})</p>`).join('')}
+                                            ${countryVisits.map(loc => `
+                                                <p class="text-xs">
+                                                   ${loc.cityName ? `${loc.cityName}, ` : ''} ${loc.visitedBy} (${format(new Date(loc.startDate), 'MMM yyyy')})
+                                                </p>
+                                            `).join('')}
                                         `;
 
                                         return (
@@ -123,7 +127,7 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                                 geography={geo}
                                                 fill={isVisited ? "#4682B4" : "#D6D6DA"}
                                                 stroke="#FFF"
-                                                onMouseEnter={() => setTooltipContent(countryTooltip)}
+                                                onMouseEnter={() => { if(isVisited) setTooltipContent(countryTooltip)}}
                                                 onMouseLeave={() => setTooltipContent(null)}
                                                 style={{
                                                     default: { outline: "none" },
@@ -135,17 +139,11 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                     })
                                 }
                             </Geographies>
-                            {cityLocations.map(loc => {
-                                const cityTooltip = `
-                                    <p class="font-bold">${loc.cityName}, ${loc.countryName}</p>
-                                    <p class="text-xs">${loc.visitedBy} (${format(new Date(loc.startDate), 'MMM yyyy')} - ${format(new Date(loc.endDate), 'MMM yyyy')})</p>
-                                `;
+                             {cityLocations.map(loc => {
                                 return (
                                     <Marker 
                                         key={loc.id} 
                                         coordinates={[loc.longitude!, loc.latitude!]}
-                                        onMouseEnter={() => setTooltipContent(cityTooltip)}
-                                        onMouseLeave={() => setTooltipContent(null)}
                                     >
                                         <circle r={3} fill="#E53E3E" stroke="#FFF" strokeWidth={1} />
                                     </Marker>
