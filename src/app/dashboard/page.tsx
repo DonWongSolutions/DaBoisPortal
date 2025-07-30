@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Check, Mail, Phone, Cake, Users, Plane, Calendar, ChevronsRight, Gift, Pin } from 'lucide-react';
 import type { User, WiseWord } from '@/lib/types';
 import { differenceInDays, format, nextDay } from 'date-fns';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 function getNextBirthday(birthday: string) {
     const today = new Date();
@@ -33,25 +34,31 @@ function PinnedQuotes({ wiseWords }: { wiseWords: WiseWord[] }) {
 
     return (
         <div className="md:hidden mb-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-primary">
-                        <Pin className="h-5 w-5" />
-                        Pinned Words of Wisdom
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {wiseWords.map(word => (
-                        <blockquote key={word.id} className="border-l-2 pl-4 italic">
-                           <p>"{word.phrase}"</p>
-                           <footer className="text-sm text-muted-foreground not-italic mt-1">
-                             ~ {word.author}
-                             {word.context && ` (${word.context})`}
-                           </footer>
-                        </blockquote>
-                    ))}
-                </CardContent>
-            </Card>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <Card>
+                        <AccordionTrigger className="p-6">
+                            <CardTitle className="flex items-center gap-2 text-primary">
+                                <Pin className="h-5 w-5" />
+                                Pinned Words of Wisdom
+                            </CardTitle>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <CardContent className="space-y-4 pt-0">
+                                {wiseWords.map(word => (
+                                    <blockquote key={word.id} className="border-l-2 pl-4 italic">
+                                       <p>"{word.phrase}"</p>
+                                       <footer className="text-sm text-muted-foreground not-italic mt-1">
+                                         ~ {word.author}
+                                         {word.context && ` (${word.context})`}
+                                       </footer>
+                                    </blockquote>
+                                ))}
+                            </CardContent>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+            </Accordion>
         </div>
     )
 }
