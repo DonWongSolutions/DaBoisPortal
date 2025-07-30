@@ -133,7 +133,7 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                          </TooltipTrigger>
                                          <TooltipContent>
                                             <p className="font-bold">{loc.cityName}, {loc.countryName}</p>
-                                            <p className="text-xs">{loc.visitedBy} ({format(new Date(l.startDate), 'MMM yyyy')} - {format(new Date(l.endDate), 'MMM yyyy')})</p>
+                                            <p className="text-xs">{loc.visitedBy} ({format(new Date(loc.startDate), 'MMM yyyy')} - {format(new Date(loc.endDate), 'MMM yyyy')})</p>
                                          </TooltipContent>
                                      </Tooltip>
                                 ))}
