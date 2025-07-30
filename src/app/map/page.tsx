@@ -115,8 +115,8 @@ function WorldMap({ locations }: { locations: Location[] }) {
                                                     </TooltipTrigger>
                                                     <TooltipContent>
                                                         <p className="font-bold">{geo.properties.name}</p>
-                                                        {countryVisits.length > 0 && countryVisits.map(l => (
-                                                             <p key={l.id} className="text-xs">{l.visitedBy} ({format(new Date(l.startDate), 'MMM yyyy')})</p>
+                                                        {countryVisits.length > 0 && countryVisits.map(loc => (
+                                                             <p key={loc.id} className="text-xs">{loc.visitedBy} ({format(new Date(loc.startDate), 'MMM yyyy')})</p>
                                                         ))}
                                                     </TooltipContent>
                                                 </Tooltip>
