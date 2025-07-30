@@ -121,10 +121,14 @@ function WorldMap({ locations }: { locations: Location[] }) {
                             <Geographies geography={geoUrl}>
                                 {({ geographies }) =>
                                     geographies.map((geo) => {
-                                        if (!geo.properties.iso_a2) return null;
-                                        
-                                        const isVisited = visitedCountryCodes.includes(geo.properties.iso_a2.toUpperCase());
-                                        const countryVisits = locations.filter(l => l.countryCode.toUpperCase() === geo.properties.iso_a2.toUpperCase());
+                                        const countryCode = geo.properties.iso_a2;
+                                        // Skip geographies without a valid country code, except for Antarctica which we'll just render grey.
+                                        if (!countryCode && geo.properties.name !== 'Antarctica') {
+                                            return null;
+                                        }
+
+                                        const isVisited = countryCode ? visitedCountryCodes.includes(countryCode.toUpperCase()) : false;
+                                        const countryVisits = countryCode ? locations.filter(l => l.countryCode.toUpperCase() === countryCode.toUpperCase()) : [];
                                         
                                         const countryTooltip = `
                                             <p class="font-bold">${geo.properties.name}</p>
