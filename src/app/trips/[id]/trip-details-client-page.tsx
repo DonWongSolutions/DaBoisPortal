@@ -384,7 +384,7 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
                                 {trip.itinerary.length > 0 ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {trip.itinerary.map((day, index) => (
-                                            <div key={index}>
+                                            <div key={day.day}>
                                                 <h3 className="font-semibold text-lg mb-4 border-b pb-2">{formatDate(day.day)}</h3>
                                                 <div className="relative overflow-y-auto max-h-[600px] pr-2">
                                                 <DayScheduleView activities={day.activities} tripId={trip.id} canManageTrip={canManageTrip} />
@@ -493,3 +493,5 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
         </AppShell>
     );
 }
+
+    
