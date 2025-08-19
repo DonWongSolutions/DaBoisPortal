@@ -11,8 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Check, Mail, Phone, Cake, Users, Plane, Calendar, ChevronsRight, Gift, Pin } from 'lucide-react';
-import type { User, WiseWord } from '@/lib/types';
+import { Check, Mail, Phone, Cake, Users, Plane, Calendar, ChevronsRight, Gift, Pin, X, HelpCircle } from 'lucide-react';
+import type { User, WiseWord, UserAvailability } from '@/lib/types';
 import { differenceInDays, format, nextDay } from 'date-fns';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -63,6 +63,34 @@ function PinnedQuotes({ wiseWords }: { wiseWords: WiseWord[] }) {
     )
 }
 
+function EventResponseStatus({ response }: { response: UserAvailability }) {
+    if (response === 'yes') {
+        return (
+            <div className="flex items-center gap-1 text-sm text-green-600">
+                <Check className="h-4 w-4" />
+                <span>You're going</span>
+            </div>
+        );
+    }
+     if (response === 'no') {
+        return (
+            <div className="flex items-center gap-1 text-sm text-red-600">
+                <X className="h-4 w-4" />
+                <span>Not going</span>
+            </div>
+        );
+    }
+     if (response === 'maybe') {
+        return (
+            <div className="flex items-center gap-1 text-sm text-yellow-600">
+                <HelpCircle className="h-4 w-4" />
+                <span>Maybe</span>
+            </div>
+        );
+    }
+    return null;
+}
+
 export default async function DashboardPage() {
   const user = await getSession();
   if (!user) {
@@ -78,11 +106,13 @@ export default async function DashboardPage() {
   const pinnedWiseWords = allWiseWords.filter(w => w.pinned);
   
   const memberUsers = allUsers.filter(u => u.role === 'member');
-  const upcomingBirthdays = memberUsers.map(u => {
-      const nextBirthday = getNextBirthday(u.birthday);
-      const daysUntil = differenceInDays(nextBirthday, new Date());
-      return { ...u, nextBirthday, daysUntil };
-  }).sort((a,b) => a.daysUntil - b.daysUntil).slice(0, 4);
+  const upcomingBirthdays = memberUsers
+    .filter(u => u.id !== user.id) // Exclude the current user
+    .map(u => {
+        const nextBirthday = getNextBirthday(u.birthday);
+        const daysUntil = differenceInDays(nextBirthday, new Date());
+        return { ...u, nextBirthday, daysUntil };
+    }).sort((a,b) => a.daysUntil - b.daysUntil).slice(0, 3); // Now shows the other 3 members
 
 
   const upcomingEvents = allEvents
@@ -221,10 +251,7 @@ export default async function DashboardPage() {
                                           <span>Created by {event.createdBy}</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1 text-sm text-green-600">
-                                        <Check className="h-4 w-4" />
-                                        <span>You're going</span>
-                                    </div>
+                                    {event.responses[user.name] && <EventResponseStatus response={event.responses[user.name]} />}
                                 </li>
                             ))}
                         </ul>

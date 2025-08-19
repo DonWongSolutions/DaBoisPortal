@@ -116,7 +116,7 @@ function WorldMap({ locations }: { locations: Location[] }) {
                     </div>
                 )}
                 <div className="w-full aspect-video">
-                    <ComposableMap projection="geoMercator">
+                    <ComposableMap projection="geoMercator" style={{ width: "100%", height: "100%" }}>
                         <ZoomableGroup center={[0, 20]} zoom={1}>
                             <Geographies geography={geoUrl}>
                                 {({ geographies }) =>
