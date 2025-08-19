@@ -14,21 +14,6 @@
     }
   },
   {
-    "id": 1753643199460,
-    "title": "o-ik90k9",
-    "date": "2025-08-02",
-    "description": "ji0j0i",
-    "isFamilyEvent": false,
-    "type": "group",
-    "createdBy": "Don",
-    "responses": {
-      "Don": "yes",
-      "Isaac": "pending",
-      "Xavier": "pending",
-      "Nathan": "pending"
-    }
-  },
-  {
     "id": 1755587135255,
     "tripId": 1755587101193,
     "title": "New Year Countdown",
@@ -38,7 +23,7 @@
     "type": "group",
     "createdBy": "Don",
     "responses": {
-      "Don": "pending",
+      "Don": "yes",
       "Isaac": "pending",
       "Xavier": "pending",
       "Nathan": "pending"
