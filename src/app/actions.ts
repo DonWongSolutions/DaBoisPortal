@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { deleteSession, getSession, setSession } from '@/lib/auth';
 import { getUsers, getEvents, saveEvents, getTrips as getTripsData, saveTrips, saveSettings, saveUsers, getLinks, saveLinks, getChatMessages, saveChatMessages, getMemories, saveMemories, getWiseWords as getWiseWordsData, saveWiseWords, getLocations as getLocationsData, saveLocations } from '@/lib/data';
-import type { AppSettings, Event, Trip, UserAvailability, User, Link as LinkType, ChatMessage, Memory, WiseWord, Location, WiseWordCategory } from '@/lib/types';
+import type { AppSettings, Event, Trip, UserAvailability, User, Link as LinkType, ChatMessage, Memory, WiseWord, Location, WiseWordCategory, ItineraryActivity } from '@/lib/types';
 import * as ical from 'node-ical';
 import { geocode } from '@/services/geocoding';
 
@@ -526,12 +526,10 @@ export async function addItineraryItemAction(tripId: number, formData: FormData)
 
     const day = formData.get('day') as string;
     
-    // Validation
     const dayDate = new Date(day);
     const startDate = new Date(trip.startDate);
     const endDate = new Date(trip.endDate);
     
-    // Set hours to 0 to compare dates only
     dayDate.setUTCHours(0,0,0,0);
     startDate.setUTCHours(0,0,0,0);
     endDate.setUTCHours(0,0,0,0);
@@ -540,7 +538,8 @@ export async function addItineraryItemAction(tripId: number, formData: FormData)
         return { success: false, message: 'Itinerary date must be within the trip date range.' };
     }
     
-    const newActivity = {
+    const newActivity: ItineraryActivity = {
+        id: Date.now(),
         startTime: formData.get('startTime') as string,
         endTime: formData.get('endTime') as string,
         description: formData.get('description') as string,
@@ -561,6 +560,66 @@ export async function addItineraryItemAction(tripId: number, formData: FormData)
     revalidatePath(`/trips/${tripId}`);
     return { success: true, message: 'Itinerary item added.' };
 }
+
+export async function updateItineraryItemAction(tripId: number, activityId: number, formData: FormData) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role === 'parent') {
+       return { success: false, message: 'Unauthorized.' };
+    }
+    const trips = await getTripsData();
+    const trip = trips.find(t => t.id === tripId);
+
+    if (!trip) {
+        return { success: false, message: 'Trip not found.' };
+    }
+
+    for (const dayItinerary of trip.itinerary) {
+        const activityIndex = dayItinerary.activities.findIndex(a => a.id === activityId);
+        if (activityIndex > -1) {
+            dayItinerary.activities[activityIndex] = {
+                ...dayItinerary.activities[activityIndex],
+                startTime: formData.get('startTime') as string,
+                endTime: formData.get('endTime') as string,
+                description: formData.get('description') as string,
+            };
+            dayItinerary.activities.sort((a, b) => a.startTime.localeCompare(b.startTime));
+            await saveTrips(trips);
+            revalidatePath(`/trips/${tripId}`);
+            return { success: true, message: 'Itinerary item updated.' };
+        }
+    }
+    
+    return { success: false, message: 'Activity not found.' };
+}
+
+export async function deleteItineraryItemAction(tripId: number, activityId: number) {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role === 'parent') {
+       return { success: false, message: 'Unauthorized.' };
+    }
+    const trips = await getTripsData();
+    const trip = trips.find(t => t.id === tripId);
+
+    if (!trip) {
+        return { success: false, message: 'Trip not found.' };
+    }
+
+    for (const dayItinerary of trip.itinerary) {
+        const activityIndex = dayItinerary.activities.findIndex(a => a.id === activityId);
+        if (activityIndex > -1) {
+            dayItinerary.activities.splice(activityIndex, 1);
+            if (dayItinerary.activities.length === 0) {
+                trip.itinerary = trip.itinerary.filter(i => i.day !== dayItinerary.day);
+            }
+            await saveTrips(trips);
+            revalidatePath(`/trips/${tripId}`);
+            return { success: true, message: 'Itinerary item deleted.' };
+        }
+    }
+    
+    return { success: false, message: 'Activity not found.' };
+}
+
 
 export async function addCostItemAction(tripId: number, formData: FormData) {
     const sessionUser = await getSession();

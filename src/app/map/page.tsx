@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useEffect, useState, useActionState, useRef } from 'react';
+import { useEffect, useState, useActionState, useRef, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { redirect } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 import { getSessionAction, addLocationAction, getLocationsAction, deleteLocationAction } from '@/app/actions';
@@ -14,12 +15,16 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Location } from '@/lib/types';
 import { format } from 'date-fns';
-import { PlusCircle, Globe, Trash2 } from 'lucide-react';
-import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
+import { PlusCircle, Globe, Trash2, MapPin } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+// Dynamically import the map component to avoid SSR issues with Leaflet
+const WorldMap = dynamic(() => import('@/components/world-map'), { 
+    ssr: false,
+    loading: () => <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center"><p>Loading Map...</p></div>
+});
+
 
 function AddLocationForm() {
     const { toast } = useToast();
@@ -79,105 +84,6 @@ function AddLocationForm() {
                 </CardContent>
             </Card>
         </form>
-    );
-}
-
-function WorldMap({ locations }: { locations: Location[] }) {
-    const visitedCountryCodes = [...new Set(locations.map(loc => loc.countryCode.toUpperCase()))];
-    const cityLocations = locations.filter(loc => loc.latitude && loc.longitude);
-
-    const uniqueCities = cityLocations.reduce((acc, current) => {
-        const key = `${current.cityName}-${current.countryCode}`;
-        if (!acc[key]) {
-            acc[key] = { ...current, visits: [] };
-        }
-        acc[key].visits.push(current);
-        return acc;
-    }, {} as Record<string, Location & { visits: Location[] }>);
-
-
-    const [tooltipContent, setTooltipContent] = useState<string | null>(null);
-    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        setTooltipPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    };
-
-    return (
-        <Card className="overflow-hidden">
-            <CardContent className="p-0 relative" onMouseMove={handleMouseMove} onMouseLeave={() => setTooltipContent(null)}>
-                {tooltipContent && (
-                    <div
-                        className="absolute z-10 p-2 text-sm bg-black text-white rounded-md pointer-events-none"
-                        style={{ top: tooltipPosition.y, left: tooltipPosition.x, transform: 'translate(10px, -100%)' }}
-                    >
-                        <div dangerouslySetInnerHTML={{ __html: tooltipContent }} />
-                    </div>
-                )}
-                <div className="w-full aspect-video">
-                    <ComposableMap projection="geoMercator" style={{ width: "100%", height: "100%" }}>
-                        <ZoomableGroup center={[0, 20]} zoom={1}>
-                            <Geographies geography={geoUrl}>
-                                {({ geographies }) =>
-                                    geographies.map((geo) => {
-                                        const countryCode = geo.properties.iso_a2;
-                                        // Skip geographies without a valid country code, except for Antarctica which we'll just render grey.
-                                        if (!countryCode && geo.properties.name !== 'Antarctica') {
-                                            return null;
-                                        }
-
-                                        const isVisited = countryCode ? visitedCountryCodes.includes(countryCode.toUpperCase()) : false;
-                                        const countryVisits = countryCode ? locations.filter(l => l.countryCode.toUpperCase() === countryCode.toUpperCase()) : [];
-                                        
-                                        const countryTooltip = `
-                                            <p class="font-bold">${geo.properties.name}</p>
-                                            ${countryVisits.map(loc => `
-                                                <p class="text-xs">
-                                                   ${loc.cityName ? `${loc.cityName}, ` : ''} ${loc.visitedBy} (${format(new Date(loc.startDate), 'MMM yyyy')})
-                                                </p>
-                                            `).join('')}
-                                        `;
-
-                                        return (
-                                            <Geography
-                                                key={geo.rsmKey}
-                                                geography={geo}
-                                                fill={isVisited ? "#4682B4" : "#D6D6DA"}
-                                                stroke="#FFF"
-                                                onMouseEnter={() => { if(isVisited) setTooltipContent(countryTooltip)}}
-                                                style={{
-                                                    default: { outline: "none" },
-                                                    hover: { outline: "none", fill: isVisited ? "#3672a4" : "#C6C6DA" },
-                                                    pressed: { outline: "none" },
-                                                }}
-                                            />
-                                        );
-                                    })
-                                }
-                            </Geographies>
-                             {Object.values(uniqueCities).map(city => {
-                                const cityTooltip = `
-                                    <p class="font-bold">${city.cityName}, ${city.countryName}</p>
-                                    ${city.visits.map(visit => `
-                                        <p class="text-xs">${visit.visitedBy} (${format(new Date(visit.startDate), 'MMM yyyy')})</p>
-                                    `).join('')}
-                                `;
-                                return (
-                                    <Marker 
-                                        key={city.id} 
-                                        coordinates={[city.longitude!, city.latitude!]}
-                                        onMouseEnter={() => setTooltipContent(cityTooltip)}
-                                    >
-                                        <circle r={3} fill="#E53E3E" stroke="#FFF" strokeWidth={1} />
-                                    </Marker>
-                                )
-                            })}
-                        </ZoomableGroup>
-                    </ComposableMap>
-                </div>
-            </CardContent>
-        </Card>
     );
 }
 
@@ -304,14 +210,16 @@ export default function MapPage() {
 
     return (
         <AppShell user={user}>
-            <PageHeader
+             <PageHeader
                 title="World Exploration Map"
                 description="A map of all the places Da Bois have been."
             />
 
             <div className="grid lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
-                    <WorldMap locations={locations} />
+                    <Card className="overflow-hidden">
+                       <WorldMap locations={locations} />
+                    </Card>
                     <LocationHistory locations={locations} user={user} onDelete={handleDeleteLocation} />
                 </div>
                 <div className="space-y-8">

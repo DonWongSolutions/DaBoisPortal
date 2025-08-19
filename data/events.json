@@ -27,5 +27,21 @@
       "Xavier": "pending",
       "Nathan": "pending"
     }
+  },
+  {
+    "id": 1755587135255,
+    "tripId": 1755587101193,
+    "title": "New Year Countdown",
+    "date": "2025-12-31",
+    "description": "This event is for the trip to Don/Isaac/Xavier/Nathan's Home. Please RSVP.",
+    "isFamilyEvent": true,
+    "type": "group",
+    "createdBy": "Don",
+    "responses": {
+      "Don": "pending",
+      "Isaac": "pending",
+      "Xavier": "pending",
+      "Nathan": "pending"
+    }
   }
 ]

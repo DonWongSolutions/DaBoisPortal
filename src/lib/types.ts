@@ -37,6 +37,7 @@ export interface Event {
 }
 
 export interface ItineraryActivity {
+  id: number;
   startTime: string;
   endTime: string;
   description: string;

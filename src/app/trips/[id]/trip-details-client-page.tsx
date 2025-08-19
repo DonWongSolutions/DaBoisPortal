@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, useActionState } from 'react';
+import { useRef, useActionState, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
@@ -14,13 +14,69 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { addItineraryItemAction, addCostItemAction, addTripSuggestionAction, createEventFromTripAction } from '@/app/actions';
-import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send, Megaphone, Trash2 } from 'lucide-react';
+import { addItineraryItemAction, addCostItemAction, addTripSuggestionAction, createEventFromTripAction, updateItineraryItemAction, deleteItineraryItemAction } from '@/app/actions';
+import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send, Megaphone, Trash2, Pencil } from 'lucide-react';
 import type { Trip, User, ItineraryActivity } from '@/lib/types';
 import { useFormStatus } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
+function EditItineraryItemDialog({ tripId, activity, children }: { tripId: number, activity: ItineraryActivity, children: React.ReactNode }) {
+    const { toast } = useToast();
+    const [open, setOpen] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
+    const action = updateItineraryItemAction.bind(null, tripId, activity.id);
+
+    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const result = await action(formData);
+        if (result.success) {
+            toast({ title: "Success", description: result.message });
+            setOpen(false);
+        } else {
+            toast({ variant: "destructive", title: "Error", description: result.message });
+        }
+        return result;
+    }, { success: false, message: '' });
+
+    const { pending } = useFormStatus();
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                 <form ref={formRef} action={formAction}>
+                    <DialogHeader>
+                        <DialogTitle>Edit Itinerary Item</DialogTitle>
+                    </DialogHeader>
+                    <CardContent className="space-y-4 pt-4 px-0">
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="startTime">Start Time</Label>
+                                <Input id="startTime" name="startTime" type="time" defaultValue={activity.startTime} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="endTime">End Time</Label>
+                                <Input id="endTime" name="endTime" type="time" defaultValue={activity.endTime} required />
+                            </div>
+                         </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea id="description" name="description" defaultValue={activity.description} required />
+                        </div>
+                    </CardContent>
+                    <DialogFooter>
+                        <Button type="submit" disabled={pending}>
+                           {pending ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </DialogFooter>
+                 </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 function AddItineraryForm({ trip }: { trip: Trip }) {
     const { toast } = useToast();
@@ -155,13 +211,23 @@ function AddSuggestionForm({ tripId }: { tripId: number }) {
     );
 }
 
-function DayScheduleView({ activities }: { activities: ItineraryActivity[] }) {
+function DayScheduleView({ activities, tripId, canManageTrip }: { activities: ItineraryActivity[], tripId: number, canManageTrip: boolean }) {
     const hours = Array.from({ length: 24 }, (_, i) => i); // 0-23
+    const { toast } = useToast();
 
     const timeToMinutes = (time: string) => {
         if (!time || !time.includes(':')) return 0;
         const [h, m] = time.split(':').map(Number);
         return h * 60 + m;
+    }
+
+    const handleDelete = async (activityId: number) => {
+        const result = await deleteItineraryItemAction(tripId, activityId);
+        if (result.success) {
+            toast({ title: "Success", description: result.message });
+        } else {
+            toast({ variant: "destructive", title: "Error", description: result.message });
+        }
     }
 
     return (
@@ -177,22 +243,52 @@ function DayScheduleView({ activities }: { activities: ItineraryActivity[] }) {
             ))}
 
             {/* Activities */}
-            {activities.map((activity, index) => {
+            {activities.map((activity) => {
                 const startMinutes = timeToMinutes(activity.startTime);
                 const endMinutes = timeToMinutes(activity.endTime);
                 const duration = Math.max(0, endMinutes - startMinutes);
                 
                 return (
                     <div 
-                        key={index} 
-                        className="absolute left-12 right-0 p-2 rounded-lg bg-accent text-accent-foreground shadow"
+                        key={activity.id} 
+                        className="absolute left-12 right-0 p-2 rounded-lg bg-accent text-accent-foreground shadow group"
                         style={{
                             top: `${startMinutes}px`,
                             height: `${duration}px`,
                         }}
                     >
-                       <p className="font-semibold text-sm">{activity.description}</p>
-                       <p className="text-xs">{activity.startTime} - {activity.endTime}</p>
+                        <div className="flex justify-between items-start">
+                           <div>
+                               <p className="font-semibold text-sm">{activity.description}</p>
+                               <p className="text-xs">{activity.startTime} - {activity.endTime}</p>
+                           </div>
+                           {canManageTrip && (
+                            <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                               <EditItineraryItemDialog tripId={tripId} activity={activity}>
+                                     <Button variant="ghost" size="icon" className="h-6 w-6">
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                               </EditItineraryItemDialog>
+                               <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>This will permanently delete this itinerary item.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDelete(activity.id)}>Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                               </AlertDialog>
+                           </div>
+                           )}
+                       </div>
                     </div>
                 );
             })}
@@ -291,7 +387,7 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
                                             <div key={index}>
                                                 <h3 className="font-semibold text-lg mb-4 border-b pb-2">{formatDate(day.day)}</h3>
                                                 <div className="relative overflow-y-auto max-h-[600px] pr-2">
-                                                <DayScheduleView activities={day.activities} />
+                                                <DayScheduleView activities={day.activities} tripId={trip.id} canManageTrip={canManageTrip} />
                                                 </div>
                                             </div>
                                         ))}
