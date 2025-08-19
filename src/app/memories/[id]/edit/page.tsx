@@ -67,11 +67,11 @@ export default function EditMemoryPage() {
     }, [memoryId]);
 
      if (loading) {
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
     
     if (!authorized || !memory || !user) {
-        return <div>Redirecting...</div>
+        return <div className="flex justify-center items-center h-screen">Redirecting...</div>
     }
 
     const updateMemoryWithId = updateMemoryAction.bind(null, memory.id);
@@ -124,4 +124,3 @@ export default function EditMemoryPage() {
         </AppShell>
     );
 }
-

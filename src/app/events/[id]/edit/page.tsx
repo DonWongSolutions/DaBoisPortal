@@ -44,8 +44,6 @@ export default function EditEventPage() {
                 }
                 setUser(sessionUser);
 
-                // We use a client-side fetch here because server-side `getEvents` is not available in client components
-                // and we need the event data to perform an authorization check before rendering the form.
                 const allEvents = await getEventsClient();
                 const currentEvent = allEvents.find(e => e.id === eventId);
                 
@@ -54,12 +52,10 @@ export default function EditEventPage() {
                      return;
                 }
                 
-                // Authorization check
                 if (sessionUser.role === 'admin' || sessionUser.name === currentEvent.createdBy) {
                     setAuthorized(true);
                     setEvent(currentEvent);
                 } else {
-                    // if not authorized, redirect
                     redirect('/events');
                 }
 
@@ -74,12 +70,11 @@ export default function EditEventPage() {
     }, [eventId]);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
     
     if (!authorized || !event || !user) {
-        // This will show briefly before the redirect happens
-        return <div>Redirecting...</div>
+        return <div className="flex justify-center items-center h-screen">Redirecting...</div>
     }
   
     const updateEventWithId = updateEventAction.bind(null, event.id);

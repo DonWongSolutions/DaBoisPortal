@@ -112,7 +112,7 @@ export default async function DashboardPage() {
         const nextBirthday = getNextBirthday(u.birthday);
         const daysUntil = differenceInDays(nextBirthday, new Date());
         return { ...u, nextBirthday, daysUntil };
-    }).sort((a,b) => a.daysUntil - b.daysUntil).slice(0, 3); // Now shows the other 3 members
+    }).sort((a,b) => a.daysUntil - b.daysUntil).slice(0, 3);
 
 
   const upcomingEvents = allEvents

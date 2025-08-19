@@ -47,11 +47,11 @@ export default function NewMemoryPage() {
     }, []);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
   
     if (!user) {
-        return <div>Error loading page. Please try logging in again.</div>;
+        return <div className="flex justify-center items-center h-screen">Redirecting...</div>;
     }
 
     return (

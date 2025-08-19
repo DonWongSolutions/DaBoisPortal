@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { addItineraryItemAction, addCostItemAction, addTripSuggestionAction, createEventFromTripAction, updateItineraryItemAction, deleteItineraryItemAction } from '@/app/actions';
-import { MapPin, Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send, Megaphone, Trash2, Pencil } from 'lucide-react';
+import { Calendar, Users, Plane, DollarSign, PlusCircle, Lightbulb, Send, Megaphone, Trash2, Pencil } from 'lucide-react';
 import type { Trip, User, ItineraryActivity } from '@/lib/types';
 import { useFormStatus } from 'react-dom';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-function EditItineraryItemDialog({ tripId, activity, children }: { tripId: number, activity: ItineraryActivity, children: React.ReactNode }) {
+function EditItineraryItemDialog({ tripId, activity, onUpdate, children }: { tripId: number, activity: ItineraryActivity, onUpdate: () => void, children: React.ReactNode }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
@@ -35,6 +35,7 @@ function EditItineraryItemDialog({ tripId, activity, children }: { tripId: numbe
         if (result.success) {
             toast({ title: "Success", description: result.message });
             setOpen(false);
+            onUpdate();
         } else {
             toast({ variant: "destructive", title: "Error", description: result.message });
         }
@@ -51,7 +52,7 @@ function EditItineraryItemDialog({ tripId, activity, children }: { tripId: numbe
                     <DialogHeader>
                         <DialogTitle>Edit Itinerary Item</DialogTitle>
                     </DialogHeader>
-                    <CardContent className="space-y-4 pt-4 px-0">
+                    <div className="py-4 space-y-4">
                          <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="startTime">Start Time</Label>
@@ -66,7 +67,7 @@ function EditItineraryItemDialog({ tripId, activity, children }: { tripId: numbe
                             <Label htmlFor="description">Description</Label>
                             <Textarea id="description" name="description" defaultValue={activity.description} required />
                         </div>
-                    </CardContent>
+                    </div>
                     <DialogFooter>
                         <Button type="submit" disabled={pending}>
                            {pending ? 'Saving...' : 'Save Changes'}
@@ -78,23 +79,17 @@ function EditItineraryItemDialog({ tripId, activity, children }: { tripId: numbe
     );
 }
 
-function AddItineraryForm({ trip }: { trip: Trip }) {
+function AddItineraryForm({ trip, onUpdate }: { trip: Trip, onUpdate: () => void }) {
     const { toast } = useToast();
     const formRef = useRef<HTMLFormElement>(null);
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         const result = await addItineraryItemAction(trip.id, formData);
         if (result.success) {
-            toast({
-                title: "Success",
-                description: result.message,
-            });
+            toast({ title: "Success", description: result.message });
             formRef.current?.reset();
+            onUpdate();
         } else {
-             toast({
-                variant: "destructive",
-                title: "Error",
-                description: result.message,
-            });
+             toast({ variant: "destructive", title: "Error", description: result.message });
         }
         return result;
     }, { success: false, message: ''});
@@ -137,7 +132,7 @@ function AddItineraryForm({ trip }: { trip: Trip }) {
     );
 }
 
-function AddCostForm({ trip, allUsers }: { trip: Trip, allUsers: User[] }) {
+function AddCostForm({ trip, allUsers, onUpdate }: { trip: Trip, allUsers: User[], onUpdate: () => void }) {
     const { pending } = useFormStatus();
     const addCostItemWithTripId = addCostItemAction.bind(null, trip.id);
     const formRef = useRef<HTMLFormElement>(null);
@@ -146,6 +141,7 @@ function AddCostForm({ trip, allUsers }: { trip: Trip, allUsers: User[] }) {
         <form ref={formRef} action={async (formData) => {
             await addCostItemWithTripId(formData);
             formRef.current?.reset();
+            onUpdate();
         }}>
             <Card>
                 <CardHeader>
@@ -184,7 +180,7 @@ function AddCostForm({ trip, allUsers }: { trip: Trip, allUsers: User[] }) {
     );
 }
 
-function AddSuggestionForm({ tripId }: { tripId: number }) {
+function AddSuggestionForm({ tripId, onUpdate }: { tripId: number, onUpdate: () => void }) {
     const { pending } = useFormStatus();
     const addSuggestionWithId = addTripSuggestionAction.bind(null, tripId);
     const formRef = useRef<HTMLFormElement>(null);
@@ -193,6 +189,7 @@ function AddSuggestionForm({ tripId }: { tripId: number }) {
         <form ref={formRef} action={async (formData) => {
             await addSuggestionWithId(formData);
             formRef.current?.reset();
+            onUpdate();
         }}>
             <Card>
                 <CardHeader>
@@ -211,7 +208,7 @@ function AddSuggestionForm({ tripId }: { tripId: number }) {
     );
 }
 
-function DayScheduleView({ activities, tripId, canManageTrip }: { activities: ItineraryActivity[], tripId: number, canManageTrip: boolean }) {
+function DayScheduleView({ activities, tripId, canManageTrip, onUpdate }: { activities: ItineraryActivity[], tripId: number, canManageTrip: boolean, onUpdate: () => void }) {
     const hours = Array.from({ length: 24 }, (_, i) => i); // 0-23
     const { toast } = useToast();
 
@@ -225,6 +222,7 @@ function DayScheduleView({ activities, tripId, canManageTrip }: { activities: It
         const result = await deleteItineraryItemAction(tripId, activityId);
         if (result.success) {
             toast({ title: "Success", description: result.message });
+            onUpdate();
         } else {
             toast({ variant: "destructive", title: "Error", description: result.message });
         }
@@ -264,7 +262,7 @@ function DayScheduleView({ activities, tripId, canManageTrip }: { activities: It
                            </div>
                            {canManageTrip && (
                             <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-                               <EditItineraryItemDialog tripId={tripId} activity={activity}>
+                               <EditItineraryItemDialog tripId={tripId} activity={activity} onUpdate={onUpdate}>
                                      <Button variant="ghost" size="icon" className="h-6 w-6">
                                         <Pencil className="h-4 w-4" />
                                     </Button>
@@ -296,7 +294,7 @@ function DayScheduleView({ activities, tripId, canManageTrip }: { activities: It
     );
 }
 
-function TripActionsCard({ trip, eventExists, user }: { trip: Trip, eventExists: boolean, user: User }) {
+function TripActionsCard({ trip, eventExists, onUpdate }: { trip: Trip, eventExists: boolean, onUpdate: () => void }) {
     const { toast } = useToast();
     const router = useRouter();
 
@@ -307,6 +305,7 @@ function TripActionsCard({ trip, eventExists, user }: { trip: Trip, eventExists:
                 title: "Success",
                 description: result.message,
             });
+            onUpdate();
             setTimeout(() => router.push('/events'), 1000);
         } else {
              toast({
@@ -348,14 +347,26 @@ function TripActionsCard({ trip, eventExists, user }: { trip: Trip, eventExists:
                 )}
              </CardContent>
         </Card>
-    )
+    );
 }
 
-export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { user: User; trip: Trip, allUsers: User[], eventExists: boolean }) {
+export function TripDetailsClientPage({ user, trip: initialTrip, allUsers, eventExists: initialEventExists }: { user: User; trip: Trip, allUsers: User[], eventExists: boolean }) {
+    const [trip, setTrip] = useState(initialTrip);
+    const [eventExists, setEventExists] = useState(initialEventExists);
     
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     };
+
+    const handleUpdate = async () => {
+        const res = await fetch(`/api/trips/${trip.id}`);
+        const updatedTrip = await res.json();
+        setTrip(updatedTrip);
+
+        const eventRes = await fetch('/api/events');
+        const allEvents = await eventRes.json();
+        setEventExists(allEvents.some((e: any) => e.tripId === trip.id));
+    }
 
     const totalCost = trip.costs.reduce((sum, item) => sum + item.amount, 0);
     const costPerPerson = trip.attendees.length > 0 ? totalCost / trip.attendees.length : 0;
@@ -383,11 +394,11 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
                              <AccordionContent className="p-6 pt-0">
                                 {trip.itinerary.length > 0 ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {trip.itinerary.map((day, index) => (
+                                        {trip.itinerary.map((day) => (
                                             <div key={day.day}>
                                                 <h3 className="font-semibold text-lg mb-4 border-b pb-2">{formatDate(day.day)}</h3>
                                                 <div className="relative overflow-y-auto max-h-[600px] pr-2">
-                                                <DayScheduleView activities={day.activities} tripId={trip.id} canManageTrip={canManageTrip} />
+                                                <DayScheduleView activities={day.activities} tripId={trip.id} canManageTrip={canManageTrip} onUpdate={handleUpdate}/>
                                                 </div>
                                             </div>
                                         ))}
@@ -478,14 +489,14 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
                             </div>
                         </CardContent>
                     </Card>
-                     {canManageTrip && <TripActionsCard trip={trip} eventExists={eventExists} user={user} /> }
+                     {canManageTrip && <TripActionsCard trip={trip} eventExists={eventExists} onUpdate={handleUpdate} /> }
 
                     {user.role === 'parent' ? (
-                        <AddSuggestionForm tripId={trip.id} />
+                        <AddSuggestionForm tripId={trip.id} onUpdate={handleUpdate} />
                     ) : (
                        <>
-                        <AddItineraryForm trip={trip} />
-                        <AddCostForm trip={trip} allUsers={allUsers} />
+                        <AddItineraryForm trip={trip} onUpdate={handleUpdate} />
+                        <AddCostForm trip={trip} allUsers={allUsers} onUpdate={handleUpdate} />
                        </>
                     )}
                 </div>
@@ -493,5 +504,3 @@ export function TripDetailsClientPage({ user, trip, allUsers, eventExists }: { u
         </AppShell>
     );
 }
-
-    

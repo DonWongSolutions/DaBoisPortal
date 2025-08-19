@@ -6,11 +6,10 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Location } from '@/lib/types';
 import { useTheme } from 'next-themes';
-import { useMemo, useRef, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { format } from 'date-fns';
 
 // Fix for default marker icon issue with webpack
-// This prevents a known issue where the default icon paths are not resolved correctly.
 if (typeof window !== 'undefined') {
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
@@ -20,8 +19,6 @@ if (typeof window !== 'undefined') {
     });
 }
 
-
-// Custom marker icon
 const cityIcon = new L.Icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
     iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -32,14 +29,8 @@ const cityIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
-interface WorldMapProps {
-    locations: Location[];
-    geoJsonData?: any; // GeoJSON data for country boundaries
-}
-
 export default function WorldMap({ locations }: { locations: Location[] }) {
     const { resolvedTheme } = useTheme();
-    const mapRef = useRef<L.Map | null>(null);
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
@@ -68,7 +59,6 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
         ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-    // This check is important because Leaflet needs the window object
     if (!isClient) {
         return <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center"><p>Loading Map...</p></div>;
     }
@@ -79,14 +69,12 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
             zoom={2} 
             style={{ height: '60vh', width: '100%' }} 
             className="rounded-lg z-0"
-            whenCreated={map => { mapRef.current = map; }}
         >
             <TileLayer
                 url={tileLayerUrl}
                 attribution={attribution}
-                key={resolvedTheme} // Force re-render when theme changes
+                key={resolvedTheme} 
             />
-
             {cityLocations.map(({ location, visits }) => (
                 <Marker key={location.id} position={[location.latitude!, location.longitude!]} icon={cityIcon}>
                     <Popup>

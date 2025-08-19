@@ -20,7 +20,7 @@ import { PlusCircle, Star, ExternalLink, Tag, Pencil, Trash2 } from 'lucide-reac
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
-function LinkDialog({ mode = 'add', link, children }: { mode?: 'add' | 'edit', link?: LinkType, children: React.ReactNode }) {
+function LinkDialog({ mode = 'add', link, children, onUpdate }: { mode?: 'add' | 'edit', link?: LinkType, children: React.ReactNode, onUpdate: () => void }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
@@ -33,6 +33,7 @@ function LinkDialog({ mode = 'add', link, children }: { mode?: 'add' | 'edit', l
             toast({ title: 'Success', description: result.message });
             setOpen(false);
             formRef.current?.reset();
+            onUpdate();
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.message });
         }
@@ -99,7 +100,7 @@ function StarRating({ link, currentRating, onRate }: { link: LinkType, currentRa
     );
 }
 
-function LinkCard({ link, user, onRate, onDelete }: { link: LinkType, user: User, onRate: (linkId: number, rating: number) => void, onDelete: (linkId: number) => void }) {
+function LinkCard({ link, user, onRate, onDelete, onUpdate }: { link: LinkType, user: User, onRate: (linkId: number, rating: number) => void, onDelete: (linkId: number) => void, onUpdate: () => void }) {
 
     const totalRating = link.ratings.reduce((acc, r) => acc + r.rating, 0);
     const averageRating = link.ratings.length > 0 ? totalRating / link.ratings.length : 0;
@@ -140,7 +141,7 @@ function LinkCard({ link, user, onRate, onDelete }: { link: LinkType, user: User
                 <>
                 <Separator />
                 <CardFooter className="pt-4 justify-end gap-2">
-                     <LinkDialog mode="edit" link={link}>
+                     <LinkDialog mode="edit" link={link} onUpdate={onUpdate}>
                          <Button variant="outline" size="sm"><Pencil className="mr-2 h-4 w-4" /> Edit</Button>
                      </LinkDialog>
                      <AlertDialog>
@@ -196,11 +197,6 @@ export default function LinkBoardPage() {
             }
         }
         fetchData();
-        
-        // This is a workaround to re-fetch links when the dialog closes,
-        // ensuring the list is up-to-date after an add/edit.
-        const interval = setInterval(fetchLinks, 1000);
-        return () => clearInterval(interval);
     }, []);
     
     const handleRate = async (linkId: number, rating: number) => {
@@ -237,7 +233,7 @@ export default function LinkBoardPage() {
     return (
         <AppShell user={user}>
             <PageHeader title="Link Board" description="A shared space for interesting links.">
-                 <LinkDialog>
+                 <LinkDialog onUpdate={fetchLinks}>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add New Link
@@ -263,20 +259,20 @@ export default function LinkBoardPage() {
                 </Card>
             )}
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredLinks.length > 0 ? (
-                    filteredLinks.map(link => (
-                        <LinkCard key={link.id} link={link} user={user} onRate={handleRate} onDelete={handleDelete} />
-                    ))
-                ) : (
-                    <div className="col-span-full flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
-                        <h3 className="text-2xl font-bold tracking-tight">No links found</h3>
-                        <p className="text-muted-foreground mb-4">
-                           {activeTag ? `No links found with the tag "${activeTag}".` : 'Get started by adding a new link.'}
-                        </p>
-                    </div>
-                )}
-            </div>
+            {filteredLinks.length > 0 ? (
+                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredLinks.map(link => (
+                        <LinkCard key={link.id} link={link} user={user} onRate={handleRate} onDelete={handleDelete} onUpdate={fetchLinks} />
+                    ))}
+                 </div>
+            ) : (
+                 <div className="col-span-full flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center">
+                    <h3 className="text-2xl font-bold tracking-tight">No links found</h3>
+                    <p className="text-muted-foreground mb-4">
+                       {activeTag ? `No links found with the tag "${activeTag}".` : 'Get started by adding a new link.'}
+                    </p>
+                 </div>
+            )}
         </AppShell>
     );
 }

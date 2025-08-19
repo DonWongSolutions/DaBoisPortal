@@ -3,7 +3,7 @@
 
 import { redirect } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { getSessionAction } from '@/app/actions';
+import { getSessionAction, createTripAction } from '@/app/actions';
 import { getUsers } from '@/lib/data.client';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createTripAction } from '@/app/actions';
 import { useEffect, useState } from 'react';
 import type { User } from '@/lib/types';
 
@@ -34,7 +33,7 @@ export default function NewTripPage() {
         async function fetchData() {
             try {
                 const sessionUser = await getSessionAction();
-                if (!sessionUser) {
+                if (!sessionUser || sessionUser.role === 'parent') {
                     redirect('/login');
                 } else {
                     const users = await getUsers();
@@ -52,11 +51,11 @@ export default function NewTripPage() {
     }, []);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
     
     if (!user) {
-        return <div>Error loading page. Please try logging in again.</div>;
+        return <div className="flex justify-center items-center h-screen">Redirecting...</div>;
     }
   
     return (

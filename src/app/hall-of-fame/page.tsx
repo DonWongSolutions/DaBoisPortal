@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-function WiseWordDialog({ users, children }: { users: User[], children: React.ReactNode }) {
+function WiseWordDialog({ users, children, onUpdate }: { users: User[], children: React.ReactNode, onUpdate: () => void }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
@@ -34,6 +34,7 @@ function WiseWordDialog({ users, children }: { users: User[], children: React.Re
             toast({ title: 'Success', description: result.message });
             setOpen(false);
             formRef.current?.reset();
+            onUpdate();
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.message });
         }
@@ -203,11 +204,6 @@ export default function HallOfFamePage() {
         }
         fetchData();
     }, []);
-    
-    useEffect(() => {
-        const interval = setInterval(fetchWisdom, 5000); 
-        return () => clearInterval(interval);
-    }, []);
 
      const handleDelete = async (id: number) => {
         const result = await deleteWiseWordAction(id);
@@ -270,7 +266,7 @@ export default function HallOfFamePage() {
         <AppShell user={user}>
             <PageHeader title="Hall of Wise Words" description="A collection of memorable phrases and inside jokes.">
                 {user.role !== 'parent' && (
-                    <WiseWordDialog users={members}>
+                    <WiseWordDialog users={members} onUpdate={fetchWisdom}>
                         <Button>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add a Wise Word
@@ -311,7 +307,7 @@ export default function HallOfFamePage() {
                        Try a different filter or add a new wise word!
                     </p>
                     {user.role !== 'parent' && (
-                         <WiseWordDialog users={members}>
+                         <WiseWordDialog users={members} onUpdate={fetchWisdom}>
                             <Button>
                                 <PlusCircle className="mr-2 h-4 w-4" />
                                 Add a Wise Word

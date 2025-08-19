@@ -197,11 +197,11 @@ export default function EventsPage() {
     }
 
   if (loading) {
-      return <div>Loading...</div>;
+      return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
   
   if (!user) {
-      return <div>Redirecting...</div>
+      return <div className="flex justify-center items-center h-screen">Redirecting...</div>;
   }
 
   return (

@@ -15,7 +15,6 @@ export default async function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full lg:grid lg:grid-cols-4">
-      {/* Background Image for Mobile */}
       <div className="absolute inset-0 lg:hidden">
          <Image
           src={settings.loginImageUrl}
@@ -28,12 +27,10 @@ export default async function LoginPage() {
         <div className="absolute inset-0 bg-background/30"></div>
       </div>
       
-      {/* Login Form Section */}
       <div className="relative flex items-center justify-center min-h-screen p-8 lg:col-span-1">
         <LoginForm users={displayedUsers} maintenanceMode={settings.maintenanceMode} />
       </div>
 
-      {/* Image Section for Desktop */}
       <div className="hidden lg:block lg:col-span-3 relative">
         <Image
           src={settings.loginImageUrl}

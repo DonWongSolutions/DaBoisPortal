@@ -42,19 +42,13 @@ export function EventResponseForm({ eventId, currentResponse }: { eventId: numbe
     );
 }
 
-function ImportSubmitButton() {
-    const { pending } = useFormStatus();
-    return (
-        <Button type="submit" variant="outline" disabled={pending}>
-            <Upload className="mr-2 h-4 w-4" />
-            {pending ? 'Importing...' : 'Import Calendar'}
-        </Button>
-    );
-}
-
 export function ImportCalendarForm() {
+    const formRef = React.useRef<HTMLFormElement>(null);
     return (
-        <form action={importCalendarAction}>
+        <form action={async (formData) => {
+            await importCalendarAction(formData);
+            formRef.current?.reset();
+        }} ref={formRef}>
             <label htmlFor="calendar-file" className="sr-only">Upload .ics file</label>
             <input type="file" name="calendarFile" id="calendar-file" className="hidden" accept=".ics" 
                 onChange={(e) => {

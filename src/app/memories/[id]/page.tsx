@@ -9,18 +9,18 @@ import Image from 'next/image';
 import { getSessionAction, getMemoryByIdAction, addMemoryCommentAction, deleteMemoryAction, deleteMemoryCommentAction } from '@/app/actions';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import type { User, Memory, MemoryComment } from '@/lib/types';
+import type { User, Memory } from '@/lib/types';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Calendar, User as UserIcon, Send, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
-function CommentForm({ memoryId }: { memoryId: number }) {
+function CommentForm({ memoryId, onCommentAdded }: { memoryId: number, onCommentAdded: () => void }) {
     const { toast } = useToast();
     const formRef = useRef<HTMLFormElement>(null);
 
@@ -28,6 +28,7 @@ function CommentForm({ memoryId }: { memoryId: number }) {
         const result = await addMemoryCommentAction(memoryId, formData);
         if (result.success) {
             formRef.current?.reset();
+            onCommentAdded();
         } else {
              toast({ variant: 'destructive', title: 'Error', description: result.message });
         }
@@ -148,10 +149,6 @@ export default function MemoryDetailPage() {
             }
         }
         fetchData();
-        
-        const interval = setInterval(fetchMemory, 2000);
-        return () => clearInterval(interval);
-
     }, [memoryId]);
 
     if (loading || !memory || !user) {
@@ -228,7 +225,7 @@ export default function MemoryDetailPage() {
                             <CardTitle>Comments ({memory.comments.length})</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <CommentForm memoryId={memory.id} />
+                            <CommentForm memoryId={memory.id} onCommentAdded={fetchMemory} />
                             <Separator />
                             <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
                                 {memory.comments.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map(comment => {

@@ -3,7 +3,7 @@
 
 import { redirect } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { getSessionAction } from '@/app/actions';
+import { getSessionAction, createEventAction } from '@/app/actions';
 import { AppShell } from '@/components/app-shell';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { createEventAction } from '@/app/actions';
 import { useEffect, useState } from 'react';
 import type { User } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -54,11 +53,11 @@ export default function NewEventPage() {
     }, []);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
   
     if (!user) {
-        return <div>Error loading page. Please try logging in again.</div>;
+        return <div className="flex justify-center items-center h-screen">Redirecting...</div>;
     }
   
     const pageTitle = "Create New Event";

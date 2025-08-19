@@ -79,16 +79,13 @@ export default function MemoriesPage() {
             }
         }
         fetchData();
-        
-        const interval = setInterval(fetchMemories, 5000);
-        return () => clearInterval(interval);
     }, []);
 
     if (loading) {
-        return <div className="flex justify-center items-center h-full">Loading memories...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading memories...</div>;
     }
     if (!user) {
-        return <div>Redirecting...</div>
+        return <div className="flex justify-center items-center h-screen">Redirecting...</div>
     }
     
     return (

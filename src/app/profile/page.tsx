@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import type { User } from '@/lib/types';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 
 
 function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: User) => void }) {
@@ -39,9 +39,6 @@ function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: 
                     redirect('/dashboard');
                 }
             }
-            if (formData.has('profilePictureUrl')) {
-               setOpenDialog(false);
-            }
         } else {
              toast({
                 variant: "destructive",
@@ -57,7 +54,7 @@ function ProfileForm({ user, onUserUpdate }: { user: User, onUserUpdate: (user: 
          if (result.success) {
             toast({
                 title: "Success",
-                description: result.message,
+                description: "Profile picture updated.",
             });
             const updatedUser = await getSessionAction();
             if (updatedUser) {
@@ -187,11 +184,11 @@ export default function ProfilePage() {
     }
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
 
     if (!user) {
-        return <div>Error loading page. Please try logging in again.</div>;
+        return <div className="flex justify-center items-center h-screen">Redirecting...</div>;
     }
   
     return (

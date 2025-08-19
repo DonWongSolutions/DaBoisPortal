@@ -9,7 +9,6 @@ import {
   Sidebar,
   SidebarHeader,
   SidebarContent,
-  SidebarFooter,
   SidebarTrigger,
   SidebarMenu,
   SidebarMenuItem,
@@ -41,11 +40,13 @@ import {
   Camera,
   Quote,
   Map,
+  MessageSquare,
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, allowedRoles: ['admin', 'member', 'parent'] },
+  { href: '/chat', label: 'Chat', icon: MessageSquare, allowedRoles: ['admin', 'member'] },
   { href: '/events', label: 'Events', icon: Calendar, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/schedule', label: 'Schedule', icon: CalendarCheck, allowedRoles: ['admin', 'member', 'parent'] },
   { href: '/trips', label: 'Trip Planner', icon: Plane, allowedRoles: ['admin', 'member', 'parent'] },
@@ -165,7 +166,6 @@ export function AppShell({
           <SidebarContent>
             <MainNav user={user} />
           </SidebarContent>
-          <SidebarFooter />
         </Sidebar>
         <div className="flex flex-col">
           <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState, useRef, useMemo } from 'react';
+import { useEffect, useState, useActionState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { redirect } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Location } from '@/lib/types';
 import { format } from 'date-fns';
-import { PlusCircle, Globe, Trash2, MapPin } from 'lucide-react';
+import { PlusCircle, Globe, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -25,8 +25,7 @@ const WorldMap = dynamic(() => import('@/components/world-map'), {
     loading: () => <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center"><p>Loading Map...</p></div>
 });
 
-
-function AddLocationForm() {
+function AddLocationForm({ onAdd }: { onAdd: () => void }) {
     const { toast } = useToast();
     const formRef = useRef<HTMLFormElement>(null);
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
@@ -34,6 +33,7 @@ function AddLocationForm() {
         if (result.success) {
             toast({ title: 'Success', description: result.message });
             formRef.current?.reset();
+            onAdd();
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.message });
         }
@@ -162,6 +162,7 @@ export default function MapPage() {
             setLocations(fetchedLocations);
         } catch (error) {
             console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch location data.' });
         }
     }
 
@@ -182,9 +183,6 @@ export default function MapPage() {
             }
         }
         fetchData();
-
-        const interval = setInterval(fetchLocations, 5000);
-        return () => clearInterval(interval);
     }, []);
     
     const handleDeleteLocation = async (id: number) => {
@@ -198,10 +196,10 @@ export default function MapPage() {
     }
 
     if (loading) {
-        return <div className="flex justify-center items-center h-full">Loading map...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading map...</div>;
     }
     if (!user) {
-        return <div>Redirecting...</div>
+        return <div className="flex justify-center items-center h-screen">Redirecting...</div>
     }
 
     const totalCountries = 195; // Approximate number of countries
@@ -232,7 +230,7 @@ export default function MapPage() {
                             <p className="text-muted-foreground">of the world explored ({visitedCount} / {totalCountries} countries)</p>
                         </CardContent>
                     </Card>
-                    {user.role !== 'parent' && <AddLocationForm />}
+                    {user.role !== 'parent' && <AddLocationForm onAdd={fetchLocations} />}
                 </div>
             </div>
         </AppShell>
