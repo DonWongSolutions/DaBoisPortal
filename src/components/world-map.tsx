@@ -6,16 +6,19 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Location } from '@/lib/types';
 import { useTheme } from 'next-themes';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { format } from 'date-fns';
 
 // Fix for default marker icon issue with webpack
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
+// This prevents a known issue where the default icon paths are not resolved correctly.
+if (typeof window !== 'undefined') {
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+}
 
 
 // Custom marker icon
@@ -37,6 +40,11 @@ interface WorldMapProps {
 export default function WorldMap({ locations }: { locations: Location[] }) {
     const { resolvedTheme } = useTheme();
     const mapRef = useRef<L.Map | null>(null);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const cityLocations = useMemo(() => {
         const cities: { [key: string]: { location: Location, visits: Location[] } } = {};
@@ -61,8 +69,8 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
         : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
     // This check is important because Leaflet needs the window object
-    if (typeof window === 'undefined') {
-        return null;
+    if (!isClient) {
+        return <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center"><p>Loading Map...</p></div>;
     }
 
     return (
