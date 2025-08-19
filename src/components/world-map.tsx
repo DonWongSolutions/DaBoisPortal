@@ -85,7 +85,7 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
                         <div className="space-y-1">
                             <p className="font-bold">{location.cityName}, {location.countryName}</p>
                             <hr className="my-1"/>
-                            {visits.map(visit => (
+                            {visits.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()).map(visit => (
                                 <p key={visit.id} className="text-xs">
                                     <strong>{visit.visitedBy}:</strong> {format(new Date(visit.startDate), 'MMM yyyy')}
                                 </p>

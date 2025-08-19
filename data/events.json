@@ -14,7 +14,7 @@
     }
   },
   {
-    "id": 1755587135255,
+    "id": 1755623326988,
     "tripId": 1755587101193,
     "title": "New Year Countdown",
     "date": "2025-12-31",
@@ -23,7 +23,7 @@
     "type": "group",
     "createdBy": "Don",
     "responses": {
-      "Don": "yes",
+      "Don": "pending",
       "Isaac": "pending",
       "Xavier": "pending",
       "Nathan": "pending"
