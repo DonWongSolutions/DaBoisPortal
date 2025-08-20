@@ -2,32 +2,52 @@
 'use client';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
-import Map, { Marker, Source, Layer, FillLayer } from 'react-map-gl';
+import Map, { Marker, Source, Layer, FillLayer, Popup } from 'react-map-gl';
 import { useTheme } from 'next-themes';
 import type { Location } from '@/lib/types';
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { format } from 'date-fns';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 const geoJsonUrl = "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_110m_admin_0_countries.geojson";
 
-const visitedLayerStyle: FillLayer = {
+const countryLayerStyle: FillLayer = {
     id: 'visited-countries',
     type: 'fill',
     paint: {
-        'fill-color': '#60A5FA',
-        'fill-opacity': 0.5
+        'fill-color': 'hsl(207 44% 49%)',
+        'fill-opacity': 0.3
+    }
+};
+const countryHighlightLayerStyle: FillLayer = {
+    id: 'highlighted-country',
+    type: 'fill',
+    paint: {
+        'fill-color': 'hsl(207 44% 49%)',
+        'fill-opacity': 0.6
+    },
+};
+
+const cityLayerStyle: FillLayer = {
+    id: 'visited-cities',
+    type: 'fill',
+    paint: {
+        'fill-color': 'hsl(0 84.2% 60.2%)',
+        'fill-opacity': 0.5,
+        'fill-outline-color': 'hsl(0 84.2% 40.2%)'
     }
 };
 
-const darkVisitedLayerStyle: FillLayer = {
-    id: 'visited-countries',
+const cityHighlightLayerStyle: FillLayer = {
+    id: 'highlighted-city',
     type: 'fill',
     paint: {
-        'fill-color': '#3B82F6',
-        'fill-opacity': 0.5
-    }
+        'fill-color': 'hsl(0 84.2% 60.2%)',
+        'fill-opacity': 0.8
+    },
 };
+
 
 function MissingTokenCard() {
     return (
@@ -41,32 +61,93 @@ function MissingTokenCard() {
                     Then, create a file named <code className="bg-muted-foreground/20 px-1 py-0.5 rounded-sm">.env.local</code> in the root of this project and add your token:
                 </p>
                 <pre className="bg-muted-foreground/20 text-xs rounded-md p-2 mt-2 text-left">
-                    <code>NEXT_PUBLIC_MAPBOX_TOKEN=&quot;YOUR_TOKEN_HERE&quot;</code>
+                    <code>NEXT_PUBLIC_MAPBOX_TOKEN="YOUR_TOKEN_HERE"</code>
                 </pre>
             </div>
         </div>
     );
 }
 
+interface HoverInfo {
+    longitude: number;
+    latitude: number;
+    name: string;
+    visitors: {
+        visitedBy: string;
+        startDate: string;
+        endDate: string;
+    }[];
+}
+
 export default function WorldMap({ locations }: { locations: Location[] }) {
     const { resolvedTheme } = useTheme();
+    const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
 
-    const visitedCountryCodes = useMemo(() => {
-        return locations.map(loc => loc.countryCode.toUpperCase());
-    }, [locations]);
-
-    const cityMarkers = useMemo(() => {
-        return locations.filter(loc => loc.latitude && loc.longitude);
-    }, [locations]);
-
-    const filter = useMemo(() => ['in', 'ISO_A2', ...visitedCountryCodes], [visitedCountryCodes]);
+    const visitedCountryCodes = useMemo(() => Array.from(new Set(locations.map(loc => loc.countryCode.toUpperCase()))), [locations]);
+    const countryFilter = useMemo(() => ['in', 'ISO_A2', ...visitedCountryCodes], [visitedCountryCodes]);
     
+    const cityGeoJSON = useMemo(() => {
+        const features = locations.filter(loc => loc.geojson).map(loc => ({
+            type: 'Feature',
+            geometry: loc.geojson,
+            properties: { id: loc.id, name: loc.cityName }
+        }));
+        return { type: 'FeatureCollection', features };
+    }, [locations]);
+
+    const locationsByCountry = useMemo(() => {
+        return locations.reduce((acc, loc) => {
+            if (!acc[loc.countryName]) acc[loc.countryName] = [];
+            acc[loc.countryName].push(loc);
+            return acc;
+        }, {} as Record<string, Location[]>);
+    }, [locations]);
+
+    const locationsByCity = useMemo(() => {
+        return locations.reduce((acc, loc) => {
+            if (loc.cityName) {
+                if (!acc[loc.cityName]) acc[loc.cityName] = [];
+                acc[loc.cityName].push(loc);
+            }
+            return acc;
+        }, {} as Record<string, Location[]>);
+    }, [locations]);
+
     if (!MAPBOX_TOKEN) {
         return <MissingTokenCard />;
     }
 
     const mapStyle = resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
-    const layerStyle = resolvedTheme === 'dark' ? darkVisitedLayerStyle : visitedLayerStyle;
+
+    const onHover = (event: mapboxgl.MapLayerMouseEvent) => {
+        if (event.features && event.features.length > 0) {
+            const feature = event.features[0];
+            const name = feature.properties?.name || feature.properties?.NAME_EN;
+            let visitors;
+            
+            if (feature.layer.id === 'visited-cities') {
+                visitors = locationsByCity[name] || [];
+            } else if (feature.layer.id === 'visited-countries') {
+                visitors = locationsByCountry[name] || [];
+            } else {
+                 setHoverInfo(null);
+                 return;
+            }
+
+            if (visitors.length > 0) {
+                setHoverInfo({
+                    longitude: event.lngLat.lng,
+                    latitude: event.lngLat.lat,
+                    name: name,
+                    visitors: visitors.map(v => ({ visitedBy: v.visitedBy, startDate: v.startDate, endDate: v.endDate }))
+                });
+            } else {
+                 setHoverInfo(null);
+            }
+        } else {
+            setHoverInfo(null);
+        }
+    };
     
     return (
         <div data-testid="world-map" className="w-full aspect-video bg-muted rounded-lg border overflow-hidden">
@@ -80,16 +161,45 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
                 mapStyle={mapStyle}
                 style={{ width: '100%', height: '100%' }}
                 projection={{name: 'mercator'}}
+                interactiveLayerIds={['visited-countries', 'visited-cities']}
+                onMouseMove={onHover}
+                onMouseLeave={() => setHoverInfo(null)}
             >
                 <Source id="countries" type="geojson" data={geoJsonUrl}>
-                    <Layer {...layerStyle} filter={filter} />
+                    <Layer {...countryLayerStyle} filter={countryFilter} />
+                    {hoverInfo && hoverInfo.visitors.some(v => v.visitedBy) && (
+                        <Layer {...countryHighlightLayerStyle} filter={['==', 'NAME_EN', hoverInfo.name]} />
+                    )}
                 </Source>
 
-                {cityMarkers.map(loc => (
-                    <Marker key={loc.id} longitude={loc.longitude!} latitude={loc.latitude!}>
-                         <div className="w-2 h-2 bg-red-500 rounded-full border-2 border-white" title={`${loc.cityName}, ${loc.countryName}`} />
-                    </Marker>
-                ))}
+                <Source id="cities" type="geojson" data={cityGeoJSON}>
+                    <Layer {...cityLayerStyle} />
+                     {hoverInfo && hoverInfo.visitors.some(v => v.visitedBy) && (
+                        <Layer {...cityHighlightLayerStyle} filter={['==', 'name', hoverInfo.name]} />
+                    )}
+                </Source>
+
+                {hoverInfo && (
+                    <Popup
+                        longitude={hoverInfo.longitude}
+                        latitude={hoverInfo.latitude}
+                        closeButton={false}
+                        closeOnClick={false}
+                        anchor="top"
+                        className="!text-black"
+                    >
+                       <div className="p-1">
+                           <h3 className="font-bold text-base mb-1">{hoverInfo.name}</h3>
+                           <ul className="space-y-1">
+                            {hoverInfo.visitors.map((v, i) => (
+                                <li key={i} className="text-sm">
+                                    <strong>{v.visitedBy}</strong>: {format(new Date(v.startDate), 'PP')} - {format(new Date(v.endDate), 'PP')}
+                                </li>
+                            ))}
+                           </ul>
+                       </div>
+                    </Popup>
+                )}
             </Map>
         </div>
     );

@@ -4,30 +4,44 @@
 interface GeocodeResult {
     latitude: number;
     longitude: number;
+    geojson: any;
 }
 
 /**
- * Fetches coordinates for a given city and country.
- * Uses the free Open-Meteo Geocoding API.
- * See: https://open-meteo.com/en/docs/geocoding-api
+ * Fetches coordinates and boundary data for a given city and country.
+ * Uses the Nominatim API.
+ * See: https://nominatim.org/release-docs/develop/api/Search/
  */
 export async function geocode(city: string, countryCode: string): Promise<GeocodeResult | null> {
     try {
-        const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
-        url.searchParams.append('name', city);
-        url.searchParams.append('country', countryCode);
-        url.searchParams.append('count', '1');
+        const url = new URL('https://nominatim.openstreetmap.org/search');
+        url.searchParams.append('city', city);
+        url.searchParams.append('countrycodes', countryCode);
+        url.searchParams.append('format', 'json');
+        url.searchParams.append('polygon_geojson', '1');
+        url.searchParams.append('limit', '1');
 
-        const response = await fetch(url);
+        const response = await fetch(url, {
+             headers: {
+                // Nominatim requires a custom User-Agent header
+                'User-Agent': 'DaBoisPortal/1.0 (Contact: don.wong@roboconoxon.org.uk)'
+            }
+        });
         if (!response.ok) {
-            console.error(`Geocoding API failed with status: ${response.status}`);
+            console.error(`Geocoding API failed with status: ${response.status} ${response.statusText}`);
             return null;
         }
 
         const data = await response.json();
-        if (data.results && data.results.length > 0) {
-            const { latitude, longitude } = data.results[0];
-            return { latitude, longitude };
+        
+        if (data && data.length > 0) {
+            const result = data[0];
+            const { lat, lon, geojson } = result;
+            return {
+                latitude: parseFloat(lat),
+                longitude: parseFloat(lon),
+                geojson: geojson
+            };
         }
         
         return null;

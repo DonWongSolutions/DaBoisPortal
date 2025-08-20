@@ -12,12 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { updateSettingsAction, getSessionAction, adminUpdateUserAction, resetPasswordAction, adminUpdateUserFlagsAction } from '@/app/actions';
+import { updateSettingsAction, getSessionAction, adminUpdateUserAction, resetPasswordAction, adminUpdateUserFlagsAction, backfillLocationDataAction } from '@/app/actions';
 import type { User, AppSettings } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { getSettings } from '@/lib/data.client';
+import { Database } from 'lucide-react';
 
 function EditUserDialog({ user, onUpdate }: { user: User, onUpdate: () => void }) {
     const { toast } = useToast();
@@ -209,6 +210,50 @@ function SettingsForm({ initialSettings }: { initialSettings: AppSettings }) {
     );
 }
 
+function DataManagement() {
+    const { toast } = useToast();
+     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const result = await backfillLocationDataAction();
+        if (result.success) {
+            toast({
+                title: "Success",
+                description: result.message,
+            });
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.message,
+            });
+        }
+        return result;
+    }, { success: false, message: ''});
+
+    return (
+         <form action={formAction}>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Data Management</CardTitle>
+                    <CardDescription>Perform data-related administrative tasks.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="maintenance-mode" className="text-base">Backfill Map Data</Label>
+                            <p className="text-sm text-muted-foreground">
+                                Fetch geographic boundary data for existing location records that are missing it.
+                            </p>
+                        </div>
+                         <Button type="submit">
+                            <Database className="mr-2 h-4 w-4" /> Run Backfill
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </form>
+    )
+}
+
 export default function AdminPage() {
     const [user, setUser] = useState<User | null>(null);
     const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -259,6 +304,8 @@ export default function AdminPage() {
             />
             <div className="space-y-8 max-w-4xl mx-auto">
                  <SettingsForm initialSettings={settings} />
+                 <Separator />
+                 <DataManagement />
                 <Separator />
                 <UserManagement users={allUsers} adminUser={user} onUpdate={handleUpdate} />
             </div>

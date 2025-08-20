@@ -23,12 +23,14 @@ export async function addLocationAction(formData: FormData) {
     
     let lat: number | undefined;
     let lon: number | undefined;
+    let geojson: any | undefined;
 
     if (cityName) {
-        const coords = await geocode(cityName, countryCode);
-        if (coords) {
-            lat = coords.latitude;
-            lon = coords.longitude;
+        const geoData = await geocode(cityName, countryCode);
+        if (geoData) {
+            lat = geoData.latitude;
+            lon = geoData.longitude;
+            geojson = geoData.geojson;
         } else {
             return { success: false, message: `Could not find coordinates for city: ${cityName}` };
         }
@@ -41,6 +43,7 @@ export async function addLocationAction(formData: FormData) {
         cityName,
         latitude: lat,
         longitude: lon,
+        geojson: geojson,
         startDate: formData.get('startDate') as string,
         endDate: formData.get('endDate') as string,
         visitedBy: sessionUser.name,
@@ -51,6 +54,7 @@ export async function addLocationAction(formData: FormData) {
     await saveLocations(locations);
 
     revalidatePath('/map');
+    revalidatePath('/admin');
     return { success: true, message: 'Location added!' };
 }
 
@@ -80,4 +84,40 @@ export async function deleteLocationAction(locationId: number) {
 
     revalidatePath('/map');
     return { success: true, message: 'Location record deleted.' };
+}
+
+export async function backfillLocationDataAction() {
+    const sessionUser = await getSession();
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return { success: false, message: 'Unauthorized' };
+    }
+
+    const locations = await getLocationsData();
+    let updatedCount = 0;
+    
+    for (const location of locations) {
+        if (location.cityName && !location.geojson) {
+             console.log(`Backfilling data for: ${location.cityName}, ${location.countryName}`);
+            const geoData = await geocode(location.cityName, location.countryCode);
+            if (geoData) {
+                location.latitude = geoData.latitude;
+                location.longitude = geoData.longitude;
+                location.geojson = geoData.geojson;
+                updatedCount++;
+            } else {
+                 console.log(`Could not find geo data for: ${location.cityName}`);
+            }
+             // Add a small delay to avoid rate-limiting
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }
+
+    if (updatedCount > 0) {
+        await saveLocations(locations);
+        revalidatePath('/map');
+        revalidatePath('/admin');
+        return { success: true, message: `Successfully backfilled boundary data for ${updatedCount} locations.` };
+    }
+
+    return { success: true, message: 'No locations needed updating.' };
 }

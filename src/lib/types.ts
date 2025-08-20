@@ -137,4 +137,5 @@ export interface Location {
     startDate: string;
     endDate: string;
     visitedBy: string;
+    geojson?: any;
 }
