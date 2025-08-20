@@ -193,6 +193,13 @@ export default function WorldMap({ locations, view }: { locations: Location[], v
                         closeOnClick={false}
                         anchor="top"
                         className="!rounded-lg !bg-popover !text-popover-foreground !p-0"
+                        style={{
+                            backgroundColor: 'white',
+                            color: 'black',
+                            border: '1px solid black',
+                            borderRadius: '8px',
+                            padding: '10px'
+                        }}
                     >
                        <div className="p-2">
                            <h3 className="font-bold text-base mb-1">{hoverInfo.name}</h3>
