@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Location } from '@/lib/types';
 import { useTheme } from 'next-themes';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 
 // Fix for default marker icon issue with webpack
@@ -32,9 +32,17 @@ const cityIcon = new L.Icon({
 export default function WorldMap({ locations }: { locations: Location[] }) {
     const { resolvedTheme } = useTheme();
     const [isClient, setIsClient] = useState(false);
+    const mapRef = useRef<L.Map | null>(null);
 
     useEffect(() => {
         setIsClient(true);
+        // Cleanup function to remove map instance on component unmount
+        return () => {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
+        };
     }, []);
 
     const cityLocations = useMemo(() => {
@@ -69,6 +77,7 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
             zoom={2} 
             style={{ height: '60vh', width: '100%' }} 
             className="rounded-lg z-0"
+            whenCreated={mapInstance => { mapRef.current = mapInstance; }}
         >
             <TileLayer
                 url={tileLayerUrl}
