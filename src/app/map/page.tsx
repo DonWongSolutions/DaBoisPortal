@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useRef } from 'react';
@@ -155,6 +156,7 @@ export default function MapPage() {
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const [view, setView] = useState<'countries' | 'cities'>('countries');
 
     const fetchLocations = async () => {
         try {
@@ -211,12 +213,17 @@ export default function MapPage() {
              <PageHeader
                 title="World Exploration Map"
                 description="A map of all the places Da Bois have been."
-            />
+            >
+                <div className="flex items-center gap-2 rounded-md bg-muted p-1">
+                    <Button variant={view === 'countries' ? 'default' : 'ghost'} onClick={() => setView('countries')}>Countries</Button>
+                    <Button variant={view === 'cities' ? 'default' : 'ghost'} onClick={() => setView('cities')}>Cities</Button>
+                </div>
+            </PageHeader>
 
             <div className="grid lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                     <Card className="overflow-hidden">
-                       <WorldMap locations={locations} />
+                       <WorldMap locations={locations} view={view} />
                     </Card>
                     <LocationHistory locations={locations} user={user} onDelete={handleDeleteLocation} />
                 </div>

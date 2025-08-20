@@ -2,7 +2,7 @@
 'use client';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
-import Map, { Marker, Source, Layer, FillLayer, Popup } from 'react-map-gl';
+import Map, { Source, Layer, FillLayer, Popup } from 'react-map-gl';
 import { useTheme } from 'next-themes';
 import type { Location } from '@/lib/types';
 import { useState, useMemo } from 'react';
@@ -16,7 +16,7 @@ const countryLayerStyle: FillLayer = {
     id: 'visited-countries',
     type: 'fill',
     paint: {
-        'fill-color': 'hsl(207 44% 49%)',
+        'fill-color': '#4F86B5',
         'fill-opacity': 0.3
     }
 };
@@ -24,7 +24,7 @@ const countryHighlightLayerStyle: FillLayer = {
     id: 'highlighted-country',
     type: 'fill',
     paint: {
-        'fill-color': 'hsl(207 44% 49%)',
+        'fill-color': '#4F86B5',
         'fill-opacity': 0.6
     },
 };
@@ -33,9 +33,9 @@ const cityLayerStyle: FillLayer = {
     id: 'visited-cities',
     type: 'fill',
     paint: {
-        'fill-color': 'hsl(0 84.2% 60.2%)',
+        'fill-color': '#DE3636',
         'fill-opacity': 0.5,
-        'fill-outline-color': 'hsl(0 84.2% 40.2%)'
+        'fill-outline-color': '#931A1A'
     }
 };
 
@@ -43,7 +43,7 @@ const cityHighlightLayerStyle: FillLayer = {
     id: 'highlighted-city',
     type: 'fill',
     paint: {
-        'fill-color': 'hsl(0 84.2% 60.2%)',
+        'fill-color': '#DE3636',
         'fill-opacity': 0.8
     },
 };
@@ -79,7 +79,7 @@ interface HoverInfo {
     }[];
 }
 
-export default function WorldMap({ locations }: { locations: Location[] }) {
+export default function WorldMap({ locations, view }: { locations: Location[], view: 'countries' | 'cities' }) {
     const { resolvedTheme } = useTheme();
     const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
 
@@ -118,6 +118,8 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
     }
 
     const mapStyle = resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
+    const interactiveLayerIds = view === 'countries' ? ['visited-countries'] : ['visited-cities'];
+
 
     const onHover = (event: mapboxgl.MapLayerMouseEvent) => {
         if (event.features && event.features.length > 0) {
@@ -161,23 +163,27 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
                 mapStyle={mapStyle}
                 style={{ width: '100%', height: '100%' }}
                 projection={{name: 'mercator'}}
-                interactiveLayerIds={['visited-countries', 'visited-cities']}
+                interactiveLayerIds={interactiveLayerIds}
                 onMouseMove={onHover}
                 onMouseLeave={() => setHoverInfo(null)}
             >
-                <Source id="countries" type="geojson" data={geoJsonUrl}>
-                    <Layer {...countryLayerStyle} filter={countryFilter} />
-                    {hoverInfo && hoverInfo.visitors.some(v => v.visitedBy) && (
-                        <Layer {...countryHighlightLayerStyle} filter={['==', 'NAME_EN', hoverInfo.name]} />
-                    )}
-                </Source>
+                {view === 'countries' && (
+                    <Source id="countries" type="geojson" data={geoJsonUrl}>
+                        <Layer {...countryLayerStyle} filter={countryFilter} />
+                        {hoverInfo && hoverInfo.visitors.some(v => v.visitedBy) && (
+                            <Layer {...countryHighlightLayerStyle} filter={['==', 'NAME_EN', hoverInfo.name]} />
+                        )}
+                    </Source>
+                )}
 
-                <Source id="cities" type="geojson" data={cityGeoJSON}>
-                    <Layer {...cityLayerStyle} />
-                     {hoverInfo && hoverInfo.visitors.some(v => v.visitedBy) && (
-                        <Layer {...cityHighlightLayerStyle} filter={['==', 'name', hoverInfo.name]} />
-                    )}
-                </Source>
+                {view === 'cities' && (
+                     <Source id="cities" type="geojson" data={cityGeoJSON}>
+                        <Layer {...cityLayerStyle} />
+                         {hoverInfo && hoverInfo.visitors.some(v => v.visitedBy) && (
+                            <Layer {...cityHighlightLayerStyle} filter={['==', 'name', hoverInfo.name]} />
+                        )}
+                    </Source>
+                )}
 
                 {hoverInfo && (
                     <Popup
@@ -186,9 +192,9 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
                         closeButton={false}
                         closeOnClick={false}
                         anchor="top"
-                        className="!text-black"
+                        className="!rounded-lg !bg-popover !text-popover-foreground !p-0"
                     >
-                       <div className="p-1">
+                       <div className="p-2">
                            <h3 className="font-bold text-base mb-1">{hoverInfo.name}</h3>
                            <ul className="space-y-1">
                             {hoverInfo.visitors.map((v, i) => (
