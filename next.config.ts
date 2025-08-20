@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
         hostname: 'upload.cc',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.mapbox.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
