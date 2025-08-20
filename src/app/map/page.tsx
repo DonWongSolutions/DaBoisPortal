@@ -19,7 +19,7 @@ import { PlusCircle, Globe, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-// Dynamically import the map component to avoid SSR issues with Leaflet
+// Dynamically import the map component to avoid SSR issues
 const WorldMap = dynamic(() => import('@/components/world-map'), { 
     ssr: false,
     loading: () => <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center"><p>Loading Map...</p></div>

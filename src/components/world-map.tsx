@@ -1,104 +1,65 @@
 
-'use client'
+'use client';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import type { Location } from '@/lib/types';
+import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import { useTheme } from 'next-themes';
-import { useMemo, useState, useEffect, useRef } from 'react';
-import { format } from 'date-fns';
+import type { Location } from '@/lib/types';
+import { useMemo } from 'react';
 
-// Fix for default marker icon issue with webpack
-if (typeof window !== 'undefined') {
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    });
-}
-
-const cityIcon = new L.Icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 export default function WorldMap({ locations }: { locations: Location[] }) {
     const { resolvedTheme } = useTheme();
-    const [isClient, setIsClient] = useState(false);
-    const mapRef = useRef<L.Map | null>(null);
 
-    useEffect(() => {
-        setIsClient(true);
-        // Cleanup function to remove the map instance
-        return () => {
-            if (mapRef.current) {
-                mapRef.current.remove();
-                mapRef.current = null;
-            }
-        };
-    }, []);
-
-    const cityLocations = useMemo(() => {
-        const cities: { [key: string]: { location: Location, visits: Location[] } } = {};
-        locations.forEach(loc => {
-            if (loc.latitude && loc.longitude) {
-                const key = `${loc.latitude},${loc.longitude}`;
-                if (!cities[key]) {
-                    cities[key] = { location: loc, visits: [] };
-                }
-                cities[key].visits.push(loc);
-            }
-        });
-        return Object.values(cities);
+    const visitedCountryCodes = useMemo(() => {
+        return new Set(locations.map(loc => loc.countryCode.toUpperCase()));
     }, [locations]);
 
-    const tileLayerUrl = resolvedTheme === 'dark' 
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    
-    const attribution = resolvedTheme === 'dark'
-        ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    const cityMarkers = useMemo(() => {
+        return locations.filter(loc => loc.latitude && loc.longitude);
+    }, [locations]);
 
-    if (!isClient) {
-        return <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center"><p>Loading Map...</p></div>;
-    }
+    const colors = {
+        default: resolvedTheme === 'dark' ? '#374151' : '#E5E7EB',
+        hover: resolvedTheme === 'dark' ? '#FBBF24' : '#F59E0B',
+        visited: resolvedTheme === 'dark' ? '#3B82F6' : '#60A5FA',
+        marker: resolvedTheme === 'dark' ? '#F87171' : '#EF4444',
+        markerStroke: resolvedTheme === 'dark' ? '#FFFFFF' : '#FFFFFF',
+    };
 
     return (
-        <MapContainer 
-            center={[20, 0]} 
-            zoom={2} 
-            style={{ height: '60vh', width: '100%' }} 
-            className="rounded-lg z-0"
-            whenCreated={mapInstance => { mapRef.current = mapInstance; }}
-        >
-            <TileLayer
-                url={tileLayerUrl}
-                attribution={attribution}
-                key={resolvedTheme} 
-            />
-            {cityLocations.map(({ location, visits }) => (
-                <Marker key={location.id} position={[location.latitude!, location.longitude!]} icon={cityIcon}>
-                    <Popup>
-                        <div className="space-y-1">
-                            <p className="font-bold">{location.cityName}, {location.countryName}</p>
-                            <hr className="my-1"/>
-                            {visits.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()).map(visit => (
-                                <p key={visit.id} className="text-xs">
-                                    <strong>{visit.visitedBy}:</strong> {format(new Date(visit.startDate), 'MMM yyyy')}
-                                </p>
-                            ))}
-                        </div>
-                    </Popup>
-                </Marker>
-            ))}
-        </MapContainer>
+        <div data-testid="world-map" className="w-full aspect-video bg-muted rounded-lg border">
+            <ComposableMap projection="geoMercator">
+                <ZoomableGroup center={[0, 20]} zoom={1}>
+                    <Geographies geography={geoUrl}>
+                        {({ geographies }) =>
+                            geographies.map(geo => {
+                                const isVisited = visitedCountryCodes.has(geo.properties.ISO_A2);
+                                return (
+                                    <Geography
+                                        key={geo.rsmKey}
+                                        geography={geo}
+                                        fill={isVisited ? colors.visited : colors.default}
+                                        stroke="#FFF"
+                                        strokeWidth={0.5}
+                                        style={{
+                                            default: { outline: 'none' },
+                                            hover: { fill: colors.hover, outline: 'none' },
+                                            pressed: { outline: 'none' },
+                                        }}
+                                    />
+                                );
+                            })
+                        }
+                    </Geographies>
+                    {cityMarkers.map(loc => (
+                         <Marker key={loc.id} coordinates={[loc.longitude!, loc.latitude!]}>
+                            <circle r={2} fill={colors.marker} stroke={colors.markerStroke} strokeWidth={1} />
+                            <title>{`${loc.cityName}, ${loc.countryName}`}</title>
+                        </Marker>
+                    ))}
+                </ZoomableGroup>
+            </ComposableMap>
+        </div>
     );
 }
