@@ -36,13 +36,6 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
 
     useEffect(() => {
         setIsClient(true);
-        // Cleanup function to remove map instance on component unmount
-        return () => {
-            if (mapRef.current) {
-                mapRef.current.remove();
-                mapRef.current = null;
-            }
-        };
     }, []);
 
     const cityLocations = useMemo(() => {
