@@ -1,7 +1,7 @@
 
 'use client'
 
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Location } from '@/lib/types';
@@ -36,6 +36,13 @@ export default function WorldMap({ locations }: { locations: Location[] }) {
 
     useEffect(() => {
         setIsClient(true);
+        // Cleanup function to remove the map instance
+        return () => {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
+        };
     }, []);
 
     const cityLocations = useMemo(() => {
