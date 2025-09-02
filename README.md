@@ -1,5 +1,4 @@
-# Firebase Studio
+# Da Bois Portal
+available on https://portal.dabois.dpdns.org/login
 
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
+> Cool Project made with Next.js
